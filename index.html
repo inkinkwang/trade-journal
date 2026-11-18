@@ -23,8 +23,8 @@ th:nth-child(-n+2){text-align:left;padding-left:8px}td input{width:100%;min-widt
 td input:focus{background:var(--soft);box-shadow:inset 0 -2px 0 var(--fg)}
 td select{border:0;border-radius:0;padding:8px 4px;min-width:0;background:transparent;text-align:center;text-align-last:center}
 td.c{padding:8px 4px;text-align:center;background:var(--soft);font-variant-numeric:tabular-nums;white-space:nowrap}
-:root{--blue:#1f6feb;--org:#e67e22}@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--blue:#6cb0ff;--org:#f0a050}}:root[data-theme="dark"]{--blue:#6cb0ff;--org:#f0a050}
-td[id^="b1_"],td[id^="b2_"]{color:var(--blue)}td.w5{color:var(--org);font-weight:600}td.in1 input{color:var(--bad);font-weight:600}td.in2{background:var(--bad)}td.in2 input{color:var(--bg);font-weight:600}td.in2 input:focus{background:transparent}td.rc input{color:var(--org);font-weight:600}.idea{margin:8px 0 6px}.idea textarea{margin-bottom:0}
+:root{--blue:#1f6feb;--org:#e67e22;--pur:#8957e5}@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--blue:#6cb0ff;--org:#f0a050;--pur:#bc8cff}}:root[data-theme="dark"]{--blue:#6cb0ff;--org:#f0a050;--pur:#bc8cff}
+td[id^="b1_"]{color:var(--blue)}td[id^="b2_"]{color:var(--pur)}td.w5{color:var(--org);font-weight:600}td.in1 input{color:var(--bad);font-weight:600}td.in2{background:var(--bad)}td.in2 input{color:var(--bg);font-weight:600}td.in2 input:focus{background:transparent}td.rc input{color:var(--org);font-weight:600}.idea{margin:8px 0 6px}.idea textarea{margin-bottom:0}
 th:first-child,td:first-child{position:sticky;left:0;z-index:1;background:var(--bg)}th:first-child{background:var(--soft)}
 .card{border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin:14px 0;background:var(--bg)}
 fieldset{border:0;border-top:1px solid var(--line);margin:0;padding:12px 0 8px;min-width:0}
@@ -56,10 +56,13 @@ summary{cursor:pointer;color:var(--mut);font-size:15px;margin:6px 0}
 .btn.sm{padding:4px 9px;font-size:13px}
 td.eh{position:relative}td.eh .ec{position:absolute;right:2px;top:1px;font-size:10px;line-height:1;color:var(--mut);pointer-events:none}td.eu input,td.eu .ec{color:var(--bad);font-weight:600}
 .emo{display:flex;flex-wrap:wrap}
-.pie{display:flex;flex-wrap:wrap;gap:18px 28px;align-items:center;margin-top:6px}.pie svg{flex:none}
+.pie{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;justify-content:center;margin-top:8px}.pie svg{flex:none}
+.pies{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;margin-top:12px}
+.pie-box{display:flex;flex-direction:column;align-items:center}
+.pie-ttl{font-size:14px;color:var(--mut);font-weight:600;margin-bottom:2px}
 .lg{display:grid;grid-template-columns:auto auto auto auto;gap:4px 14px;font-size:14.5px;font-variant-numeric:tabular-nums;align-items:center}.lg i{width:12px;height:12px;border-radius:3px;display:inline-block}.lg .r{text-align:right}
 #pxs{font-size:14px;margin-left:12px}
-#s3{--bg:#fff;--fg:#2c3e50;--mut:#7b8794;--line:#e6e9ed;--soft:#fff;--bad:#d0342c;--blue:#1f6feb;--org:#e67e22;color-scheme:light;background:#fff;color:var(--fg);border-radius:10px;padding:2px 14px 8px;margin:0 -14px}
+#s3{--bg:#fff;--fg:#2c3e50;--mut:#7b8794;--line:#e6e9ed;--soft:#fff;--bad:#d0342c;--blue:#1f6feb;--org:#e67e22;color-scheme:light;background:#fff;color:var(--fg);border-radius:10px;padding:18px 20px 20px;margin:0}
 #s3 .hd b.nm{color:var(--org);font-size:24px;font-weight:700}#s3 .fl,#s3 .fl li{color:var(--bad)}#s3 .note{color:var(--blue)}#s3 .note .ts{color:var(--mut)}
 dialog#syncDlg{border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);padding:20px;max-width:460px;width:calc(100% - 32px);box-shadow:0 12px 36px rgba(0,0,0,.22)}
 dialog#syncDlg::backdrop{background:rgba(0,0,0,.45)}
@@ -147,7 +150,7 @@ function updE(i,k){const s=S.stocks[i],h=s['h'+k]||[],td=$('ec'+k+'_'+i);if(!td)
 function logE(i,k,o,v){const a=num(o),b=num(v);if(a==null||b==null||a===b)return;const s=S.stocks[i],h=s['h'+k]||(s['h'+k]=[]);h.push({ts:Date.now(),from:a,to:b});while(h.length>10)h.shift();updE(i,k)}
 
 /* 新增交易表單 */
-const HP=['搶反彈（1–5 天）','短線（1 個月內）','波段（1–3 個月）','中期（3–12 個月）','長期（1 年以上）'],EMO=['怕錯過','無腦','攤平','害怕','恐懼','興奮'],emoT=x=>Array.isArray(x.emo)?x.emo.join('、'):(x.emo||''),O=(a,ph)=>(ph?'<option value="">請選擇</option>':'')+a.map(v=>`<option>${v}</option>`).join(''),
+const HP=['搶反彈（1–5 天）','短線（1 個月內）','波段（1–3 個月）','中期（3–12 個月）','長期（1 年以上）'],EMO=['冷靜','怕錯過','無腦','攤平','害怕','恐懼','興奮'],emoT=x=>Array.isArray(x.emo)?x.emo.join('、'):(x.emo||''),O=(a,ph)=>(ph?'<option value="">請選擇</option>':'')+a.map(v=>`<option>${v}</option>`).join(''),
 F=(id,l,t='text')=>`<label>${l}<input id="f-${id}" type="${t}" step="any"></label>`,
 Sel=(id,l,a,ph)=>`<label>${l}<select id="f-${id}">${O(a,ph)}</select></label>`;
 $('tf').innerHTML=`<fieldset><legend>標的與部位</legend><div class="g">${F('name','投資標的')}${F('buyDate','買入日','date')}${F('price','買入價','number')}${F('qty','股數','number')}<label>總金額（自動）<input id="f-total" readonly></label>${Sel('hold','持有時期',HP)}</div></fieldset>
@@ -198,7 +201,7 @@ function open(t){
  const hd=`<div class="card"><div class="hd"><b class="nm">${esc(t.name)}</b><span class="m">建立於 ${fmt(t.ts)}</span>${S.capital?`<span class="m">占本金 ${(tot/S.capital*100).toFixed(1)}%</span>`:''}<span class="sp"></span>${ed?'':`<button class="btn ghost" data-a="edit" ${a}>編輯</button>`}<button class="btn ghost" data-a="del" ${a}>刪除</button></div>`;
  if(ed)return hd+eform(t)+'</div>';
  return `${hd}${body(t)}
- <fieldset><legend>後續補充說明（悔恨、懊惱、糾結，結束前都可以一直新增）</legend><textarea rows="3" ${a} data-k="nt" placeholder="現在的感受、看到的價格、想怎麼做…">${esc(d.nt)}</textarea><div><button class="btn sm" data-a="note" ${a}>新增紀錄</button></div>${notes(t)}</fieldset>
+ <fieldset><legend aria-hidden="true">&nbsp;</legend><textarea rows="3" ${a} data-k="nt" placeholder="現在的感受、看到的價格、想怎麼做…">${esc(d.nt)}</textarea><div><button class="btn sm" data-a="note" ${a}>新增紀錄</button></div>${notes(t)}</fieldset>
  <fieldset><legend>結束交易（買進與賣出都結束後填寫）</legend><div class="g"><label>結束日<input type="date" ${a} data-k="end" value="${esc(d.end)}"></label><label>賣出價<input type="number" step="any" ${a} data-k="sell" value="${esc(d.sell)}"></label><label>總報酬（%，自動）<input id="ret_${t.id}" readonly value="${cs?cs.ret:''}"></label><label>損益金額（元，自動）<input id="pnl_${t.id}" readonly value="${cs?cs.pnl:''}"></label></div><p class="sub" style="margin:6px 0 0">依賣出價與勾選的合併單計算，已內建扣除買、賣手續費各 0.039% 與賣出證交稅 0.3%。</p>
  <label style="margin-top:12px">交易復盤（建議 100 字內）<textarea class="big" ${a} data-k="review">${esc(d.review)}</textarea><span class="cnt">${(d.review||'').length} 字</span></label>
  <div style="margin:6px 0 12px"><span class="m" style="font-size:14px">合併其他交易單（勾選後一起復盤）</span><br>${others.map(o=>`<label class="ck"><input type="checkbox" ${a} data-m="${o.id}" ${(d.merge||[]).includes(o.id)?'checked':''}>${esc(o.name)} ${esc(o.buyDate||'')} ${o.qty} 股</label>`).join('')||'<span class="m">目前沒有其他進行中的交易</span>'}</div>
@@ -215,20 +218,23 @@ function R(){
  $('op').innerHTML=op.map(open).join('')||'<p class="m">目前沒有進行中的交易。</p>';
  $('dn').innerHTML=dn.map(done).join('')||'<p class="m">完成的交易會依結束日由新到舊陳列在這裡。</p>';
  $('n1').textContent='（'+op.length+'）';$('n2').textContent='（'+dn.length+'）';lvr()}
-function lvr(){const op=S.trades.filter(t=>!t.closed&&!t.mergedInto),by={},bn={},inv=op.reduce((a,t)=>{const m=t.price*t.qty;by[t.hold]=(by[t.hold]||0)+m;bn[t.name]=(bn[t.name]||0)+m;return a+m},0),cp=S.capital||0,pc=x=>cp?(x/cp*100).toFixed(1)+'%':'—',cell=(k,x)=>`<span><i>${k}</i>${money(x)}　${pc(x)}</span>`;
- $('lv').innerHTML='<div class="kv">'+cell('持有總金額',inv)+cell('現金水位',cp-inv)+HP.concat(Object.keys(by).filter(k=>k&&!HP.includes(k))).map(k=>cell(k,by[k]||0)).join('')+'</div>'+pie(bn,inv,cp)}
-/* 資金水位圓餅圖（淡彩色，含個股名稱） */
+function lvr(){const op=S.trades.filter(t=>!t.closed&&!t.mergedInto),by={},bn={},inv=op.reduce((a,t)=>{const m=t.price*t.qty,hk=t.hold?t.hold.split('（')[0]:'未分類';by[hk]=(by[hk]||0)+m;bn[t.name]=(bn[t.name]||0)+m;return a+m},0),cp=S.capital||0,pc=x=>cp?(x/cp*100).toFixed(1)+'%':'—',cell=(k,x)=>`<span><i>${k}</i>${money(x)}　${pc(x)}</span>`;
+ const hOrder=HP.map(h=>h.split('（')[0]),byEntries=hOrder.concat(Object.keys(by).filter(k=>!hOrder.includes(k))).filter(k=>by[k]>0).map(k=>[k,by[k]]);
+ const bnEntries=Object.entries(bn).sort((a,b)=>b[1]-a[1]);
+ const charts=inv||cp?`<div class="pies">${pie(bnEntries,inv,cp,'個股分布')}${pie(byEntries,inv,cp,'持有期限分布')}</div>`:'<p class="m" style="margin:6px 0 0">輸入總本金或新增交易後顯示圓餅圖</p>';
+ $('lv').innerHTML='<div class="kv">'+cell('持有總金額',inv)+cell('現金水位',cp-inv)+'</div>'+charts}
+/* 資金水位圓餅圖（淡彩色） */
 const PAL=['#a7c7e7','#f8c8dc','#b5e8c9','#fde2a7','#d7c4f2','#ffcba4','#a8e6e2','#f6b6b6','#c9e4a6','#e6cfb3','#b8d0f5','#f3d1f0'];
-function pie(bn,inv,cp){
- const sl=Object.entries(bn).sort((a,b)=>b[1]-a[1]).map(([k,v],i)=>({k,v,c:PAL[i%PAL.length]})),cash=Math.max(cp-inv,0);
+function pie(entries,inv,cp,title){
+ const sl=entries.map(([k,v],i)=>({k,v,c:PAL[i%PAL.length]})),cash=Math.max(cp-inv,0);
  if(cash>0)sl.push({k:'現金',v:cash,c:'#e9ecef'});
- const tot=sl.reduce((a,s)=>a+s.v,0);if(!tot)return '<p class="m" style="margin:6px 0 0">輸入總本金或新增交易後顯示圓餅圖</p>';
+ const tot=sl.reduce((a,s)=>a+s.v,0);if(!tot)return '';
  const R=110,cx=120,cy=120,P=a=>[cx+R*Math.cos(a),cy+R*Math.sin(a)];let a0=-Math.PI/2,svg='',lb='';
  sl.forEach(s=>{const f=s.v/tot,a1=a0+f*2*Math.PI,[x0,y0]=P(a0),[x1,y1]=P(a1),m=(a0+a1)/2;
   svg+=f>=0.9999?`<circle cx="${cx}" cy="${cy}" r="${R}" fill="${s.c}"/>`:`<path d="M${cx},${cy}L${x0.toFixed(2)},${y0.toFixed(2)}A${R},${R} 0 ${f>.5?1:0} 1 ${x1.toFixed(2)},${y1.toFixed(2)}Z" fill="${s.c}" stroke="#fff" stroke-width="1.5"/>`;
   if(f>=0.05){const lx=cx+R*.62*Math.cos(m),ly=cy+R*.62*Math.sin(m);lb+=`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="12.5" fill="#34495e"><tspan x="${lx.toFixed(1)}" dy="-.2em" font-weight="600">${esc(s.k)}</tspan><tspan x="${lx.toFixed(1)}" dy="1.2em">${(f*100).toFixed(1)}%</tspan></text>`}
   a0=a1});
- return `<div class="pie"><svg width="240" height="240" viewBox="0 0 240 240">${svg}${lb}</svg><div class="lg">${sl.map(s=>`<i style="background:${s.c}"></i><span>${esc(s.k)}</span><span class="r">${money(s.v)}</span><span class="r m">${cp?(s.v/cp*100).toFixed(1):(s.v/tot*100).toFixed(1)}%</span>`).join('')}</div></div>`}
+ return `<div class="pie-box"><div class="pie-ttl">${esc(title)}</div><div class="pie"><svg width="240" height="240" viewBox="0 0 240 240">${svg}${lb}</svg><div class="lg">${sl.map(s=>`<i style="background:${s.c}"></i><span>${esc(s.k)}</span><span class="r">${money(s.v)}</span><span class="r m">${cp?(s.v/cp*100).toFixed(1):(s.v/tot*100).toFixed(1)}%</span>`).join('')}</div></div></div>`}
 
 const FEE=0.00039,TAX=0.003;
 function calcClose(t){const s=num((t.draft||{}).sell);if(s==null)return null;
