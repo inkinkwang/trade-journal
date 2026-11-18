@@ -61,10 +61,16 @@ td.eh{position:relative}td.eh .ec{position:absolute;right:2px;top:1px;font-size:
 #pxs{font-size:14px;margin-left:12px}
 #s3{--bg:#fff;--fg:#2c3e50;--mut:#7b8794;--line:#e6e9ed;--soft:#fff;--bad:#d0342c;--blue:#1f6feb;--org:#e67e22;color-scheme:light;background:#fff;color:var(--fg);border-radius:10px;padding:2px 14px 8px;margin:0 -14px}
 #s3 .hd b.nm{color:var(--org);font-size:24px;font-weight:700}#s3 .fl,#s3 .fl li{color:var(--bad)}#s3 .note{color:var(--blue)}#s3 .note .ts{color:var(--mut)}
+dialog#syncDlg{border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);padding:20px;max-width:460px;width:calc(100% - 32px);box-shadow:0 12px 36px rgba(0,0,0,.22)}
+dialog#syncDlg::backdrop{background:rgba(0,0,0,.45)}
+dialog#syncDlg h3{margin:0 0 10px;font-size:18px}
+dialog#syncDlg ol{margin:8px 0 14px;padding-left:20px;font-size:14px;color:var(--mut);line-height:1.6}
+dialog#syncDlg .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;justify-content:flex-end}
+#syncMsg{font-size:13.5px;margin-top:8px;min-height:1.2em}
 </style></head>
 <body><main>
 <header><h1>交易追蹤與復盤</h1>
-<div style="display:flex;gap:14px;align-items:center"><label style="flex-direction:row;align-items:center;gap:8px">總本金（元）<input id="cap" type="number" style="width:120px"></label><span id="st" class="m"></span></div></header>
+<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center"><label style="flex-direction:row;align-items:center;gap:8px">總本金（元）<input id="cap" type="number" style="width:120px"></label><span id="st" class="m"></span><button class="btn ghost sm" id="syncBtn" type="button">☁️ 同步設定</button></div></header>
 
 <h2>一、個股追蹤表</h2>
 <div class="idea"><label>預備操作想法（隨時修改，自動儲存，約 200 字內）<textarea id="idea" rows="3" placeholder="例如：台積電回到買點一以下先買…"></textarea><span class="cnt m" id="ideac">0 / 200 字</span></label></div>
@@ -82,6 +88,24 @@ td.eh{position:relative}td.eh .ec{position:absolute;right:2px;top:1px;font-size:
 <h2>四、完整交易報告 <span id="n2" class="m"></span></h2>
 <div id="dn"></div>
 </main>
+<dialog id="syncDlg">
+<h3>☁️ GitHub 私人 Gist 跨裝置同步</h3>
+<ol>
+<li>前往 GitHub → Settings → Developer settings → Personal access tokens（Fine-grained 或 Classic）。</li>
+<li>權限只需勾選 <b>Gists（Read and write）</b>。</li>
+<li>將產生的 Token 貼到下方；其他裝置／瀏覽器貼入<b>同一組 Token</b> 即可自動同步。</li>
+</ol>
+<label>GitHub Personal Access Token
+<input id="ghTok" type="password" placeholder="github_pat_... 或 ghp_..." autocomplete="off">
+</label>
+<div id="syncMeta" class="ts" style="margin-top:8px"></div>
+<div id="syncMsg" class="m"></div>
+<div class="row">
+<button class="btn ghost sm" id="syncClr" type="button">清除設定</button>
+<button class="btn ghost sm" id="syncClose" type="button">關閉</button>
+<button class="btn sm" id="syncSave" type="button">儲存並同步</button>
+</div>
+</dialog>
 <script>
 const K='tj1',$=id=>document.getElementById(id),num=v=>{const x=parseFloat(v);return isFinite(x)?x:null},
 esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),
@@ -268,22 +292,64 @@ function pxSched(){clearTimeout(pxT);const n=twNow(),day=target();
  if(S.pxFor!==day){if(!pxBusy){const wait=pxTry&&Date.now()-pxTry<5*6e4?5*6e4-(Date.now()-pxTry):0;pxT=setTimeout(()=>pxUpdate(day),wait)}return}
  let ds=n.ds,wd=n.wd,add=0;if(!(wd>=1&&wd<=5&&n.min<T0)){do{ds=dsAdd(ds,1);wd=(wd+1)%7;add++}while(wd===0||wd===6)}
  const ms=(add*1440+T0-n.min)*6e4-n.d.getUTCSeconds()*1e3+1e3;pxT=setTimeout(pxSched,Math.min(ms,6*3600e3))}
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)pxSched()});
-/* 儲存（雲端私人 + 本機備份） */
-function dirty(){S.ts=Date.now();st('儲存中…');clearTimeout(tmr);tmr=setTimeout(save,700)}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){pxSched();if(!tmr&&ghCfg().token)syncPull(true)}});
+/* 儲存（GitHub 私人 Gist 雲端同步 + 本機備份） */
+const GK='tj1_gh',GIST_FILE='trade-journal-data.json';
+let syncBusy=false;
+function ghCfg(){try{return JSON.parse(localStorage.getItem(GK))||{}}catch(e){return{}}}
+function setGhCfg(c){try{if(c&&c.token)localStorage.setItem(GK,JSON.stringify(c));else localStorage.removeItem(GK)}catch(e){}}
+function updSyncBtn(){const c=ghCfg();$('syncBtn').textContent=c.token?'☁️ 已啟用同步':'☁️ 同步設定'}
+async function ghReq(path,opt={}){
+ const c=ghCfg();if(!c.token)throw new Error('尚未設定 Token');
+ const r=await fetch('https://api.github.com'+path,{...opt,cache:'no-store',headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+c.token,'Content-Type':'application/json',...(opt.headers||{})}});
+ if(!r.ok){let msg='HTTP '+r.status;try{const e=await r.json();if(e.message)msg=e.message}catch(_){}throw new Error(msg)}
+ return r.json()}
+async function findOrCreateGist(){
+ let c=ghCfg();
+ if(c.gistId){try{const g=await ghReq('/gists/'+c.gistId);if(g&&g.files&&g.files[GIST_FILE])return g}catch(e){if(!String(e.message).includes('404'))throw e;c.gistId='';setGhCfg(c)}}
+ const list=await ghReq('/gists?per_page=100');
+ const hit=list.find(g=>g.files&&g.files[GIST_FILE]);
+ if(hit){c.gistId=hit.id;setGhCfg(c);return await ghReq('/gists/'+hit.id)}
+ const created=await ghReq('/gists',{method:'POST',body:JSON.stringify({description:'交易追蹤與復盤資料（自動同步）',public:false,files:{[GIST_FILE]:{content:JSON.stringify(S)}}})});
+ c.gistId=created.id;setGhCfg(c);return created}
+function applyRemote(o){S=o;norm();try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}build();R();$('cap').value=S.capital;pxStat();pxSched()}
+async function syncPull(quiet){
+ if(syncBusy||!ghCfg().token)return;
+ syncBusy=true;if(!quiet)st('同步中…');
+ try{
+  const g=await findOrCreateGist(),f=g.files&&g.files[GIST_FILE];
+  if(f&&f.content){
+   const o=JSON.parse(f.content);
+   if((o.ts||0)>(S.ts||0))applyRemote(o);
+   else if((S.ts||0)>(o.ts||0))await ghReq('/gists/'+g.id,{method:'PATCH',body:JSON.stringify({files:{[GIST_FILE]:{content:JSON.stringify(S)}}})})}
+  else if(S.ts){await ghReq('/gists/'+g.id,{method:'PATCH',body:JSON.stringify({files:{[GIST_FILE]:{content:JSON.stringify(S)}}})})}
+  st('已同步 · GitHub Gist')
+ }catch(e){if(!quiet)st('同步失敗（'+(e.message||'網路錯誤')+'），已存於本機');throw e}
+ finally{syncBusy=false;updSyncBtn()}}
+function dirty(){S.ts=Date.now();st('儲存中…');clearTimeout(tmr);tmr=setTimeout(()=>{tmr=null;save()},700)}
 async function save(){
  const j=JSON.stringify(S);try{localStorage.setItem(K,j)}catch(e){}
- if(ref){try{await ref.set({json:j});st('已儲存 · 私人資料')}catch(e){st('雲端儲存失敗，已存於本機')}}else st('已存於此瀏覽器')}
+ const c=ghCfg();
+ if(!c.token){st('已存於此瀏覽器');return}
+ try{
+  if(!c.gistId)await findOrCreateGist();
+  const id=ghCfg().gistId;
+  await ghReq('/gists/'+id,{method:'PATCH',body:JSON.stringify({files:{[GIST_FILE]:{content:j}}})});
+  st('已同步 · GitHub Gist')
+ }catch(e){st('雲端同步失敗，已存於本機')}}
 
 const SEED=[{"n":"台積電","d":"2026-11-06","low":"2020","px":"2170","e26":"109.21","p1":"13.5","p2":"12","note":"","eb":"27","e27":"145.69"},{"n":"聯發科","d":"2026-07-29","low":"2990","px":"3840","e26":"70.87","p1":"18","p2":"16","note":"16.5-14.5eps風險高","eb":"27","e27":"146.97"},{"n":"京元電","d":"2026-11-17","low":"173.5","px":"176.5","e26":"8.06","p1":"13","p2":"10","note":"","eb":"27","e27":"13.02"},{"n":"欣興","d":"2026-11-17","low":"637","px":"637","e26":"23.7","p1":"14.5","p2":"11.5","note":"","eb":"27","e27":"43.36"},{"n":"南電","d":"2026-06-08","low":"761","px":"792","e26":"18.08","p1":"15","p2":"12","note":"","eb":"27","e27":"46.98"},{"n":"景碩","d":"2026-07-30","low":"541","px":"542","e26":"13.88","p1":"14","p2":"11","note":"eps 落差大","eb":"27","e27":"36.03"},{"n":"台光電","d":"2026-11-17","low":"3420","px":"3540","e26":"114.67","p1":"15.5","p2":"13","note":"","eb":"27","e27":"216.47"},{"n":"金像電","d":"2026-07-30","low":"705","px":"835","e26":"41.57","p1":"11.5","p2":"9.5","note":"","eb":"27","e27":"69.1"},{"n":"臻鼎","d":"2026-11-06","low":"355","px":"370.5","e26":"13.79","p1":"12","p2":"10","note":"","eb":"27","e27":"24.49"},{"n":"健鼎","d":"2026-07-29","low":"327","px":"438","e26":"32.27","p1":"9.5","p2":"7.5","note":"","eb":"27","e27":"39.76"},{"n":"技嘉","d":"2026-11-17","low":"268.5","px":"274.5","e26":"36.18","p1":"7","p2":"6","note":"","eb":"27","e27":"38.63"},{"n":"台達電","d":"2026-11-06","low":"1020","px":"1055","e26":"38.66","p1":"16","p2":"14","note":"","eb":"27","e27":"61.24"},{"n":"光寶科","d":"2026-07-29","low":"176.5","px":"207","e26":"11.19","p1":"11.5","p2":"9.5","note":"","eb":"27","e27":"15.34"},{"n":"奇鋐","d":"2026-07-20","low":"2015","px":"2470","e26":"104.82","p1":"14","p2":"11","note":"13-10.5","eb":"27","e27":"156.83"},{"n":"雙鴻","d":"2026-07-30","low":"810","px":"927","e26":"55.63","p1":"10.5","p2":"7.5","note":"","eb":"27","e27":"85.35"},{"n":"健策","d":"2026-07-14","low":"2990","px":"4335","e26":"67.53","p1":"18","p2":"14.5","note":"eps風險高","eb":"27","e27":"192.62"},{"n":"富世達","d":"2026-07-30","low":"1205","px":"1660","e26":"63.58","p1":"13","p2":"11","note":"","eb":"27","e27":"107.7"},{"n":"嘉澤","d":"2026-11-06","low":"1495","px":"1680","e26":"76.07","p1":"13","p2":"11","note":"12-10.5","eb":"27","e27":"110.44"},{"n":"貿聯","d":"2026-11-06","low":"1325","px":"1410","e26":"72.51","p1":"11","p2":"9","note":"","eb":"27","e27":"127.11"},{"n":"南亞科","d":"2026-11-17","low":"316","px":"329","e26":"76.14","p1":"4","p2":"3","note":"","eb":"26","e27":"126.45"},{"n":"宇瞻","d":"2026-11-17","low":"143","px":"151.5","e26":"62","p1":"2.2","p2":"1.8","note":"2027 EPS 預估 45–70","eb":"26","e27":""},{"n":"宜鼎","d":"2026-11-17","low":"780","px":"838","e26":"343.64","p1":"2.2","p2":"1.8","note":"","eb":"26","e27":"283"}];
-if(!S.seeded&&!S.stocks.some(s=>s.n)){SEED.forEach((x,i)=>S.stocks[i]=x);S.seeded=1;S.ts=Date.now();try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}}
-build();R();$('cap').value=S.capital;$('f-buyDate').value=today();fc();st('本機儲存');pxStat();pxSched();
-(async()=>{try{
- const u=await claude.use('user'),id=u&&await u.id(),db=await claude.use('db');
- if(!db||!id)return st('僅存於此瀏覽器（未登入）');
- ref=db.doc('data/users/'+id+'/app');
- const s=await ref.get();
- if(s.exists){const o=JSON.parse(s.data().json);if((o.ts||0)>(S.ts||0)){S=o;norm();build();R();$('cap').value=S.capital;pxStat();pxSched()}else save()}
- else if(S.ts)save();
- st('已連線 · 私人資料')}catch(e){st('僅存於此瀏覽器')}})();
+if(!S.seeded&&!S.stocks.some(s=>s.n)){SEED.forEach((x,i)=>S.stocks[i]=x);S.seeded=1;S.ts=1;try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}}
+build();R();$('cap').value=S.capital;$('f-buyDate').value=today();fc();st('本機儲存');updSyncBtn();pxStat();pxSched();
+$('syncBtn').onclick=()=>{const c=ghCfg();$('ghTok').value=c.token||'';$('syncMeta').textContent=c.gistId?'Gist ID：'+c.gistId:'尚未連結雲端 Gist';$('syncMsg').textContent='';$('syncDlg').showModal()};
+$('syncClose').onclick=()=>$('syncDlg').close();
+$('syncClr').onclick=()=>{setGhCfg(null);updSyncBtn();st('僅存於此瀏覽器（未設定同步）');$('syncDlg').close()};
+$('syncSave').onclick=async()=>{
+ const tok=$('ghTok').value.trim();if(!tok){$('syncMsg').className='bad';$('syncMsg').textContent='請輸入 GitHub Token';return}
+ const prev=ghCfg();setGhCfg({token:tok,gistId:prev.token===tok?prev.gistId:''});
+ $('syncMsg').className='m';$('syncMsg').textContent='連線驗證並同步中…';
+ try{await syncPull(false);$('syncMsg').className='ok';$('syncMsg').textContent='同步成功！';setTimeout(()=>$('syncDlg').close(),600)}
+ catch(e){setGhCfg(prev.token?prev:null);updSyncBtn();$('syncMsg').className='bad';$('syncMsg').textContent='失敗：'+(e.message||'請確認 Token 權限包含 Gists')}
+};
+if(ghCfg().token)syncPull(false).catch(()=>{});else st('僅存於此瀏覽器（未設定同步）');
 </script></body></html>
