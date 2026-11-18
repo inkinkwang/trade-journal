@@ -15,7 +15,7 @@ header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:s
 .sub,.m{color:var(--mut)}.sub{font-size:14.5px;margin:2px 0 12px}
 .bad{color:var(--bad)}.ok{color:var(--ok)}
 .wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
-table{border-collapse:collapse;table-layout:fixed;width:1372px}
+table{border-collapse:collapse;table-layout:fixed;width:1242px}
 th{font-weight:500;font-size:14px;color:var(--mut);text-align:center;padding:9px 4px;border-bottom:1px solid var(--line);background:var(--soft);white-space:nowrap}
 td{padding:0;border-bottom:1px solid var(--line)}
 tr:last-child td{border-bottom:0}
@@ -24,7 +24,7 @@ td input:focus{background:var(--soft);box-shadow:inset 0 -2px 0 var(--fg)}
 td select{border:0;border-radius:0;padding:8px 4px;min-width:0;background:transparent;text-align:center;text-align-last:center}
 td.c{padding:8px 4px;text-align:center;background:var(--soft);font-variant-numeric:tabular-nums;white-space:nowrap}
 :root{--blue:#1f6feb;--org:#e67e22;--pur:#8957e5}@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--blue:#6cb0ff;--org:#f0a050;--pur:#bc8cff}}:root[data-theme="dark"]{--blue:#6cb0ff;--org:#f0a050;--pur:#bc8cff}
-td[id^="b1_"]{color:var(--blue)}td[id^="b2_"]{color:var(--pur)}td.w5{color:var(--org);font-weight:600}td.in1 input{color:var(--bad);font-weight:600}td.in2{background:var(--bad)}td.in2 input{color:var(--bg);font-weight:600}td.in2 input:focus{background:transparent}td.rc input{color:var(--org);font-weight:600}.idea{margin:8px 0 6px}.idea textarea{margin-bottom:0}
+td[id^="b1_"]{color:var(--pur)}td[id^="b2_"]{color:var(--blue)}td.w5{color:var(--org);font-weight:600}td.in1 input{color:var(--bad);font-weight:600}td.in2{background:var(--bad)}td.in2 input{color:var(--bg);font-weight:600}td.in2 input:focus{background:transparent}td.rc input{color:var(--org);font-weight:600}.idea{margin:8px 0 6px}.idea textarea{margin-bottom:0}
 th:first-child,td:first-child{position:sticky;left:0;z-index:1;background:var(--bg)}th:first-child{background:var(--soft)}
 .card{border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin:14px 0;background:var(--bg)}
 fieldset{border:0;border-top:1px solid var(--line);margin:0;padding:12px 0 8px;min-width:0}
@@ -64,6 +64,7 @@ td.eh{position:relative}td.eh .ec{position:absolute;right:2px;top:1px;font-size:
 #pxs{font-size:14px;margin-left:12px}
 #s3{--bg:#fff;--fg:#2c3e50;--mut:#7b8794;--line:#e6e9ed;--soft:#fff;--bad:#d0342c;--blue:#1f6feb;--org:#e67e22;color-scheme:light;background:#fff;color:var(--fg);border-radius:10px;padding:18px 20px 20px;margin:0}
 #s3 .hd b.nm{color:var(--org);font-size:24px;font-weight:700}#s3 .fl,#s3 .fl li{color:var(--bad)}#s3 .note{color:var(--blue)}#s3 .note .ts{color:var(--mut)}
+#lv .kv{justify-content:center;gap:12px 64px;text-align:center}#lv .kv span{margin:0}
 dialog#syncDlg{border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);padding:20px;max-width:460px;width:calc(100% - 32px);box-shadow:0 12px 36px rgba(0,0,0,.22)}
 dialog#syncDlg::backdrop{background:rgba(0,0,0,.45)}
 dialog#syncDlg h3{margin:0 0 10px;font-size:18px}
@@ -133,7 +134,7 @@ function pdate(v){const m=String(v||'').match(/^(\d{2}|\d{4})[\/\-.](\d{1,2})[\/
 function dd(v){const d=pdate(v);return d?String(d.getFullYear()).slice(2)+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0'):(v||'')}
 const C=[['n','個股名稱','text'],['d','低點日','text'],['low','低點價位','number'],['px','最新收盤價','number'],['b1','買點一價位'],['b2','買點二價位'],['r','買賣差率'],['e26','2026eps','number'],['e27','2027eps','number'],['p1','買點一 P/E','number'],['p2','買點二 P/E','number'],['note','備註','text'],['eb','買點採用 EPS','sel']];
 function build(){
- $('idea').value=S.idea||'';$('ideac').textContent=(S.idea||'').length+' / 200 字';const W=[92,88,84,84,84,84,84,76,76,88,88,340,104];$('tb').innerHTML='<colgroup>'+W.map(w=>`<col style="width:${w}px">`).join('')+'</colgroup><tr>'+C.map(c=>`<th>${c[1]}</th>`).join('')+'</tr>'+S.stocks.map((s,i)=>'<tr>'+C.map(c=>c[2]==='sel'?`<td><select data-r="${i}" data-k="eb"><option value="27"${s.eb!=='26'?' selected':''}>2027 EPS</option><option value="26"${s.eb==='26'?' selected':''}>2026 EPS</option></select></td>`:c[2]?`<td${EK.includes(c[0])?' class="eh"':''}><input data-r="${i}" data-k="${c[0]}" type="${c[2]}" step="any" value="${esc(c[0]==='d'?dd(s.d):s[c[0]])}"${c[0]==='d'?' placeholder="YY/MM/DD"':''}>${EK.includes(c[0])?`<span class="ec" id="ec${c[0]}_${i}"></span>`:''}</td>`:`<td class="c" id="${c[0]}_${i}"></td>`).join('')+'</tr>').join('');
+ $('idea').value=S.idea||'';$('ideac').textContent=(S.idea||'').length+' / 200 字';const W=[92,88,84,84,84,84,84,76,76,88,88,210,104];$('tb').innerHTML='<colgroup>'+W.map(w=>`<col style="width:${w}px">`).join('')+'</colgroup><tr>'+C.map(c=>`<th>${c[1]}</th>`).join('')+'</tr>'+S.stocks.map((s,i)=>'<tr>'+C.map(c=>c[2]==='sel'?`<td><select data-r="${i}" data-k="eb"><option value="27"${s.eb!=='26'?' selected':''}>2027 EPS</option><option value="26"${s.eb==='26'?' selected':''}>2026 EPS</option></select></td>`:c[2]?`<td${EK.includes(c[0])?' class="eh"':''}><input data-r="${i}" data-k="${c[0]}" type="${c[2]}" step="any" value="${esc(c[0]==='d'?dd(s.d):s[c[0]])}"${c[0]==='d'?' placeholder="YY/MM/DD"':''}>${EK.includes(c[0])?`<span class="ec" id="ec${c[0]}_${i}"></span>`:''}</td>`:`<td class="c" id="${c[0]}_${i}"></td>`).join('')+'</tr>').join('');
  S.stocks.forEach((_,i)=>upd(i))}
 function upd(i){
  const s=S.stocks[i],e=num(s.eb==='26'?s.e26:s.e27),a=num(s.p1),b=num(s.p2),p=num(s.px),
