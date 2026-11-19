@@ -15,10 +15,11 @@ header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:s
 .sub,.m{color:var(--mut)}.sub{font-size:14.5px;margin:2px 0 12px}
 .bad{color:var(--bad)}.ok{color:var(--ok)}
 .wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
-table{border-collapse:collapse;table-layout:fixed;width:1242px}
+table{border-collapse:collapse;table-layout:fixed;width:1326px}
 th{font-weight:500;font-size:14px;color:var(--mut);text-align:center;padding:9px 4px;border-bottom:1px solid var(--line);background:var(--soft);white-space:nowrap}
 td{padding:0;border-bottom:1px solid var(--line)}
 tr:last-child td{border-bottom:0}
+th:nth-child(3),td:nth-child(3){border-right:1px solid var(--line)}
 th:nth-child(-n+2){text-align:left;padding-left:8px}td input{width:100%;min-width:0;border:0;background:transparent;color:inherit;font:inherit;padding:8px 4px;outline:0;border-radius:0;text-align:center}td:nth-child(-n+2) input{text-align:left;padding-left:8px}
 td input:focus{background:var(--soft);box-shadow:inset 0 -2px 0 var(--fg)}
 td select{border:0;border-radius:0;padding:8px 4px;min-width:0;background:transparent;text-align:center;text-align-last:center}
@@ -133,16 +134,16 @@ const T=id=>S.trades.find(t=>t.id===id);
 /* 個股追蹤表 */
 function pdate(v){const m=String(v||'').match(/^(\d{2}|\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);if(!m)return null;let y=+m[1];if(y<100)y+=2000;const d=new Date(y,m[2]-1,m[3]);return isNaN(d)?null:d}
 function dd(v){const d=pdate(v);return d?String(d.getFullYear()).slice(2)+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0'):(v||'')}
-const C=[['n','個股名稱','text'],['d','低點日','text'],['low','低點價位','number'],['px','最新收盤價','number'],['b1','買點一價位'],['b2','買點二價位'],['r','買賣差率'],['e26','2026eps','number'],['e27','2027eps','number'],['p1','買點一 P/E','number'],['p2','買點二 P/E','number'],['note','備註','text'],['eb','買點採用 EPS','sel']];
+const C=[['n','個股名稱','text'],['d','低點日','text'],['low','低點價位','number'],['px','最新收盤價','number'],['b1','買點一價位'],['b2','買點二價位'],['r','買賣差率'],['r2','超跌差率'],['e26','2026eps','number'],['e27','2027eps','number'],['p1','買點一 P/E','number'],['p2','買點二 P/E','number'],['note','備註','text'],['eb','買點採用 EPS','sel']];
 function build(){
- $('idea').value=S.idea||'';$('ideac').textContent=(S.idea||'').length+' / 200 字';const W=[92,88,84,84,84,84,84,76,76,88,88,210,104];$('tb').innerHTML='<colgroup>'+W.map(w=>`<col style="width:${w}px">`).join('')+'</colgroup><tr>'+C.map(c=>`<th>${c[1]}</th>`).join('')+'</tr>'+S.stocks.map((s,i)=>'<tr>'+C.map(c=>c[2]==='sel'?`<td><select data-r="${i}" data-k="eb"><option value="27"${s.eb!=='26'?' selected':''}>2027 EPS</option><option value="26"${s.eb==='26'?' selected':''}>2026 EPS</option></select></td>`:c[2]?`<td${EK.includes(c[0])?' class="eh"':''}><input data-r="${i}" data-k="${c[0]}" type="${c[2]}" step="any" value="${esc(c[0]==='d'?dd(s.d):s[c[0]])}"${c[0]==='d'?' placeholder="YY/MM/DD"':''}>${EK.includes(c[0])?`<span class="ec" id="ec${c[0]}_${i}"></span>`:''}</td>`:`<td class="c" id="${c[0]}_${i}"></td>`).join('')+'</tr>').join('');
+ $('idea').value=S.idea||'';$('ideac').textContent=(S.idea||'').length+' / 200 字';const W=[92,88,84,84,84,84,84,84,76,76,88,88,210,104];$('tb').innerHTML='<colgroup>'+W.map(w=>`<col style="width:${w}px">`).join('')+'</colgroup><tr>'+C.map(c=>`<th>${c[1]}</th>`).join('')+'</tr>'+S.stocks.map((s,i)=>'<tr>'+C.map(c=>c[2]==='sel'?`<td><select data-r="${i}" data-k="eb"><option value="27"${s.eb!=='26'?' selected':''}>2027 EPS</option><option value="26"${s.eb==='26'?' selected':''}>2026 EPS</option></select></td>`:c[2]?`<td${EK.includes(c[0])?' class="eh"':''}><input data-r="${i}" data-k="${c[0]}" type="${c[2]}" step="any" value="${esc(c[0]==='d'?dd(s.d):s[c[0]])}"${c[0]==='d'?' placeholder="YY/MM/DD"':''}>${EK.includes(c[0])?`<span class="ec" id="ec${c[0]}_${i}"></span>`:''}</td>`:`<td class="c" id="${c[0]}_${i}"></td>`).join('')+'</tr>').join('');
  S.stocks.forEach((_,i)=>upd(i))}
 function upd(i){
  const s=S.stocks[i],e=num(s.eb==='26'?s.e26:s.e27),a=num(s.p1),b=num(s.p2),p=num(s.px),
- b1=e!=null&&a!=null?e*a:null,b2=e!=null&&b!=null?e*b:null,r=p&&b1!=null?(p-b1)/p*100:null,
+ b1=e!=null&&a!=null?e*a:null,b2=e!=null&&b!=null?e*b:null,r=p&&b1!=null?(p-b1)/p*100:null,r2=p&&b2!=null?(p-b2)/p*100:null,
  R2=x=>x==null?'—':String(Math.round(x*100)/100);
  $('b1_'+i).textContent=R2(b1);$('b2_'+i).textContent=R2(b2);
- const rc=$('r_'+i);rc.textContent=r==null?'—':r.toFixed(1)+'%';rc.classList.toggle('w5',r!=null&&r<=7);const pc=document.querySelector('[data-r="'+i+'"][data-k="px"]').parentElement,i2=p!=null&&b2!=null&&p<=b2,i1=p!=null&&b1!=null&&p<=b1;pc.classList.toggle('in2',i2);pc.classList.toggle('in1',i1&&!i2);const dp=pdate(s.d),dc=document.querySelector('[data-r="'+i+'"][data-k="d"]').parentElement;dc.classList.toggle('rc',!!dp&&dp<=Date.now()&&(Date.now()-dp)/864e5<=30);EK.forEach(k=>updE(i,k))}
+ [['r_',r],['r2_',r2]].forEach(([id,v])=>{const el=$(id+i);el.textContent=v==null?'—':v.toFixed(1)+'%';el.classList.toggle('w5',v!=null&&v<=7)});const pc=document.querySelector('[data-r="'+i+'"][data-k="px"]').parentElement,i2=p!=null&&b2!=null&&p<=b2,i1=p!=null&&b1!=null&&p<=b1;pc.classList.toggle('in2',i2);pc.classList.toggle('in1',i1&&!i2);const dp=pdate(s.d),dc=document.querySelector('[data-r="'+i+'"][data-k="d"]').parentElement;dc.classList.toggle('rc',!!dp&&dp<=Date.now()&&(Date.now()-dp)/864e5<=30);EK.forEach(k=>updE(i,k))}
 /* EPS 修改紀錄：每欄保留最近 10 次；最近連續 3 次以上同方向（上調或下修）顯示紅色 */
 const EK=['e26','e27'];
 function streak(h){let n=0,d=0;for(let j=h.length-1;j>=0;j--){const x=Math.sign(h[j].to-h[j].from);if(!x)break;if(!d)d=x;if(x!==d)break;n++}return n}
