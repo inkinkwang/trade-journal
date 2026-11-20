@@ -58,10 +58,10 @@ summary{cursor:pointer;color:var(--mut);font-size:15px;margin:6px 0}
 td.eh{position:relative}td.eh .ec{position:absolute;right:2px;top:1px;font-size:10px;line-height:1;color:var(--mut);pointer-events:none}td.eu input,td.eu .ec{color:var(--bad);font-weight:600}
 .emo{display:flex;flex-wrap:wrap}
 .pie{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;justify-content:center;margin-top:8px}.pie svg{flex:none}
-.pies{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;margin-top:12px}
+.pies{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px;margin-top:12px}
 .pie-box{display:flex;flex-direction:column;align-items:center}
 .pie-ttl{font-size:14px;color:var(--mut);font-weight:600;margin-bottom:2px}
-.lg{display:grid;grid-template-columns:auto auto auto auto;gap:4px 14px;font-size:14.5px;font-variant-numeric:tabular-nums;align-items:center}.lg i{width:12px;height:12px;border-radius:3px;display:inline-block}.lg .r{text-align:right}
+.lg{display:grid;grid-template-columns:auto auto auto auto;gap:4px 12px;font-size:14.5px;font-variant-numeric:tabular-nums;align-items:center}.lg.lg5{grid-template-columns:auto auto auto auto auto}.lg i{width:12px;height:12px;border-radius:3px;display:inline-block}.lg .r{text-align:right}
 #pxs{font-size:14px;margin-left:12px}
 #s3{--bg:#fff;--fg:#2c3e50;--mut:#7b8794;--line:#e6e9ed;--soft:#fff;--bad:#d0342c;--blue:#1f6feb;--org:#e67e22;color-scheme:light;background:rgba(255,255,255,.8);color:var(--fg);border-radius:10px;padding:20px 32px 22px;margin:0}
 #s3 .card{margin:22px 0}
@@ -82,7 +82,7 @@ dialog#syncDlg .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;justify-
 <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center"><label style="flex-direction:row;align-items:center;gap:8px">總本金（元）<input id="cap" type="number" style="width:120px"></label><span id="st" class="m"></span><button class="btn ghost sm" id="syncNow" type="button" style="display:none">↻ 立即同步</button><button class="btn ghost sm" id="syncBtn" type="button">☁️ 同步設定</button></div></header>
 
 <h2>一、個股追蹤表</h2>
-<div class="idea"><label>預備操作想法（隨時修改，自動儲存，約 200 字內）<textarea id="idea" rows="3" placeholder="例如：台積電回到買點一以下先買…"></textarea><span class="cnt m" id="ideac">0 / 200 字</span></label></div>
+<div class="idea"><label style="flex-direction:row;align-items:center;gap:10px">日期<input id="idea" type="text" maxlength="20" placeholder="例如：11/20" style="width:160px"></label></div>
 <p class="sub" style="height:48px"></p>
 <div class="wrap"><table id="tb"></table></div>
 <p style="margin:10px 0 0"><button class="btn ghost" data-a="addrow" style="font-size:14px">＋ 新增一列</button> <button class="btn ghost" data-a="pxnow" style="font-size:14px">↻ 立即更新收盤價</button><span id="pxs" class="m"></span></p>
@@ -136,14 +136,14 @@ function pdate(v){const m=String(v||'').match(/^(\d{2}|\d{4})[\/\-.](\d{1,2})[\/
 function dd(v){const d=pdate(v);return d?String(d.getFullYear()).slice(2)+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0'):(v||'')}
 const C=[['n','個股名稱','text'],['d','低點日','text'],['low','低點價位','number'],['px','最新收盤價','number'],['b1','買點一價位'],['b2','買點二價位'],['r','買賣差率'],['r2','超跌差率'],['e26','2026eps','number'],['e27','2027eps','number'],['p1','買點一 P/E','number'],['p2','買點二 P/E','number'],['note','備註','text'],['eb','買點採用 EPS','sel']];
 function build(){
- $('idea').value=S.idea||'';$('ideac').textContent=(S.idea||'').length+' / 200 字';const W=[92,88,84,84,84,84,84,84,76,76,88,88,210,104];$('tb').innerHTML='<colgroup>'+W.map(w=>`<col style="width:${w}px">`).join('')+'</colgroup><tr>'+C.map(c=>`<th>${c[1]}</th>`).join('')+'</tr>'+S.stocks.map((s,i)=>'<tr>'+C.map(c=>c[2]==='sel'?`<td><select data-r="${i}" data-k="eb"><option value="27"${s.eb!=='26'?' selected':''}>2027 EPS</option><option value="26"${s.eb==='26'?' selected':''}>2026 EPS</option></select></td>`:c[2]?`<td${EK.includes(c[0])?' class="eh"':''}><input data-r="${i}" data-k="${c[0]}" type="${c[2]}" step="any" value="${esc(c[0]==='d'?dd(s.d):s[c[0]])}"${c[0]==='d'?' placeholder="YY/MM/DD"':''}>${EK.includes(c[0])?`<span class="ec" id="ec${c[0]}_${i}"></span>`:''}</td>`:`<td class="c" id="${c[0]}_${i}"></td>`).join('')+'</tr>').join('');
+ $('idea').value=S.idea||'';const W=[92,88,84,84,84,84,84,84,76,76,88,88,210,104];$('tb').innerHTML='<colgroup>'+W.map(w=>`<col style="width:${w}px">`).join('')+'</colgroup><tr>'+C.map(c=>`<th>${c[1]}</th>`).join('')+'</tr>'+S.stocks.map((s,i)=>'<tr>'+C.map(c=>c[2]==='sel'?`<td><select data-r="${i}" data-k="eb"><option value="27"${s.eb!=='26'?' selected':''}>2027 EPS</option><option value="26"${s.eb==='26'?' selected':''}>2026 EPS</option></select></td>`:c[2]?`<td${EK.includes(c[0])?' class="eh"':''}><input data-r="${i}" data-k="${c[0]}" type="${c[2]}" step="any" value="${esc(c[0]==='d'?dd(s.d):s[c[0]])}"${c[0]==='d'?' placeholder="YY/MM/DD"':''}>${EK.includes(c[0])?`<span class="ec" id="ec${c[0]}_${i}"></span>`:''}</td>`:`<td class="c" id="${c[0]}_${i}"></td>`).join('')+'</tr>').join('');
  S.stocks.forEach((_,i)=>upd(i))}
 function upd(i){
  const s=S.stocks[i],e=num(s.eb==='26'?s.e26:s.e27),a=num(s.p1),b=num(s.p2),p=num(s.px),
  b1=e!=null&&a!=null?e*a:null,b2=e!=null&&b!=null?e*b:null,r=p&&b1!=null?(p-b1)/p*100:null,r2=p&&b2!=null?(p-b2)/p*100:null,
  R2=x=>x==null?'—':String(Math.round(x*100)/100);
  $('b1_'+i).textContent=R2(b1);$('b2_'+i).textContent=R2(b2);
- [['r_',r],['r2_',r2]].forEach(([id,v])=>{const el=$(id+i);el.textContent=v==null?'—':v.toFixed(1)+'%';el.classList.toggle('w5',v!=null&&v<=7)});const pc=document.querySelector('[data-r="'+i+'"][data-k="px"]').parentElement,i2=p!=null&&b2!=null&&p<=b2,i1=p!=null&&b1!=null&&p<=b1;pc.classList.toggle('in2',i2);pc.classList.toggle('in1',i1&&!i2);const dp=pdate(s.d),dc=document.querySelector('[data-r="'+i+'"][data-k="d"]').parentElement;dc.classList.toggle('rc',!!dp&&dp<=Date.now()&&(Date.now()-dp)/864e5<=30);EK.forEach(k=>updE(i,k))}
+ [['r_',r,7],['r2_',r2,8]].forEach(([id,v,lim])=>{const el=$(id+i);el.textContent=v==null?'—':v.toFixed(1)+'%';el.classList.toggle('w5',v!=null&&v<=lim)});const pc=document.querySelector('[data-r="'+i+'"][data-k="px"]').parentElement,i2=p!=null&&b2!=null&&p<=b2,i1=p!=null&&b1!=null&&p<=b1;pc.classList.toggle('in2',i2);pc.classList.toggle('in1',i1&&!i2);const dp=pdate(s.d),dc=document.querySelector('[data-r="'+i+'"][data-k="d"]').parentElement;dc.classList.toggle('rc',!!dp&&dp<=Date.now()&&(Date.now()-dp)/864e5<=30);EK.forEach(k=>updE(i,k))}
 /* EPS 修改紀錄：每欄保留最近 10 次；最近連續 3 次以上同方向（上調或下修）顯示紅色 */
 const EK=['e26','e27'];
 function streak(h){let n=0,d=0;for(let j=h.length-1;j>=0;j--){const x=Math.sign(h[j].to-h[j].from);if(!x)break;if(!d)d=x;if(x!==d)break;n++}return n}
@@ -221,23 +221,23 @@ function R(){
  $('op').innerHTML=op.map(open).join('')||'<p class="m">目前沒有進行中的交易。</p>';
  $('dn').innerHTML=dn.map(done).join('')||'<p class="m">完成的交易會依結束日由新到舊陳列在這裡。</p>';
  $('n1').textContent='（'+op.length+'）';$('n2').textContent='（'+dn.length+'）';lvr()}
-function lvr(){const op=S.trades.filter(t=>!t.closed&&!t.mergedInto),by={},bn={},inv=op.reduce((a,t)=>{const m=t.price*t.qty,hk=t.hold?t.hold.split('（')[0]:'未分類';by[hk]=(by[hk]||0)+m;bn[t.name]=(bn[t.name]||0)+m;return a+m},0),cp=S.capital||0,pc=x=>cp?(x/cp*100).toFixed(1)+'%':'—',cell=(k,x)=>`<span><i>${k}</i>${money(x)}　${pc(x)}</span>`;
+function lvr(){const op=S.trades.filter(t=>!t.closed&&!t.mergedInto),by={},bn={},bq={},inv=op.reduce((a,t)=>{const m=t.price*t.qty,hk=t.hold?t.hold.split('（')[0]:'未分類';by[hk]=(by[hk]||0)+m;bn[t.name]=(bn[t.name]||0)+m;bq[t.name]=(bq[t.name]||0)+(t.qty||0);return a+m},0),cp=S.capital||0,pc=x=>cp?(x/cp*100).toFixed(1)+'%':'—',cell=(k,x)=>`<span><i>${k}</i>${money(x)}　${pc(x)}</span>`;
  const hOrder=HP.map(h=>h.split('（')[0]),byEntries=hOrder.concat(Object.keys(by).filter(k=>!hOrder.includes(k))).filter(k=>by[k]>0).map(k=>[k,by[k]]);
- const bnEntries=Object.entries(bn).sort((a,b)=>b[1]-a[1]);
- const charts=inv||cp?`<div class="pies">${pie(bnEntries,inv,cp,'個股分布')}${pie(byEntries,inv,cp,'持有期限分布')}</div>`:'<p class="m" style="margin:6px 0 0">輸入總本金或新增交易後顯示圓餅圖</p>';
+ const bnEntries=Object.entries(bn).sort((a,b)=>b[1]-a[1]).map(([k,v])=>[k,v,bq[k]?v/bq[k]:null]);
+ const charts=inv||cp?`<div class="pies">${pie(bnEntries,inv,cp,'個股分布',true)}${pie(byEntries,inv,cp,'持有期限分布',false)}</div>`:'<p class="m" style="margin:6px 0 0">輸入總本金或新增交易後顯示圓餅圖</p>';
  $('lv').innerHTML='<div class="kv">'+cell('持有總金額',inv)+cell('現金水位',cp-inv)+'</div>'+charts}
 /* 資金水位圓餅圖（淡彩色） */
 const PAL=['#a7c7e7','#f8c8dc','#b5e8c9','#fde2a7','#d7c4f2','#ffcba4','#a8e6e2','#f6b6b6','#c9e4a6','#e6cfb3','#b8d0f5','#f3d1f0'];
-function pie(entries,inv,cp,title){
- const sl=entries.map(([k,v],i)=>({k,v,c:PAL[i%PAL.length]})),cash=Math.max(cp-inv,0);
- if(cash>0)sl.push({k:'現金',v:cash,c:'#e9ecef'});
+function pie(entries,inv,cp,title,showAvg){
+ const sl=entries.map(([k,v,avg],i)=>({k,v,avg,c:PAL[i%PAL.length]})),cash=Math.max(cp-inv,0);
+ if(cash>0)sl.push({k:'現金',v:cash,avg:null,c:'#e9ecef'});
  const tot=sl.reduce((a,s)=>a+s.v,0);if(!tot)return '';
  const R=110,cx=120,cy=120,P=a=>[cx+R*Math.cos(a),cy+R*Math.sin(a)];let a0=-Math.PI/2,svg='',lb='';
  sl.forEach(s=>{const f=s.v/tot,a1=a0+f*2*Math.PI,[x0,y0]=P(a0),[x1,y1]=P(a1),m=(a0+a1)/2;
   svg+=f>=0.9999?`<circle cx="${cx}" cy="${cy}" r="${R}" fill="${s.c}"/>`:`<path d="M${cx},${cy}L${x0.toFixed(2)},${y0.toFixed(2)}A${R},${R} 0 ${f>.5?1:0} 1 ${x1.toFixed(2)},${y1.toFixed(2)}Z" fill="${s.c}" stroke="#fff" stroke-width="1.5"/>`;
   if(f>=0.05){const lx=cx+R*.62*Math.cos(m),ly=cy+R*.62*Math.sin(m);lb+=`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="12.5" fill="#34495e"><tspan x="${lx.toFixed(1)}" dy="-.2em" font-weight="600">${esc(s.k)}</tspan><tspan x="${lx.toFixed(1)}" dy="1.2em">${(f*100).toFixed(1)}%</tspan></text>`}
   a0=a1});
- return `<div class="pie-box"><div class="pie-ttl">${esc(title)}</div><div class="pie"><svg width="240" height="240" viewBox="0 0 240 240">${svg}${lb}</svg><div class="lg">${sl.map(s=>`<i style="background:${s.c}"></i><span>${esc(s.k)}</span><span class="r">${money(s.v)}</span><span class="r m">${cp?(s.v/cp*100).toFixed(1):(s.v/tot*100).toFixed(1)}%</span>`).join('')}</div></div></div>`}
+ return `<div class="pie-box"><div class="pie-ttl">${esc(title)}</div><div class="pie"><svg width="240" height="240" viewBox="0 0 240 240">${svg}${lb}</svg><div class="lg${showAvg?' lg5':''}">${sl.map(s=>`<i style="background:${s.c}"></i><span>${esc(s.k)}</span>${showAvg?`<span class="r m">${s.avg!=null?'均 '+Math.round(s.avg*100)/100:''}</span>`:''}<span class="r">${money(s.v)}</span><span class="r m">${cp?(s.v/cp*100).toFixed(1):(s.v/tot*100).toFixed(1)}%</span>`).join('')}</div></div></div>`}
 
 const FEE=0.00039,TAX=0.003;
 function calcClose(t){const s=num((t.draft||{}).sell);if(s==null)return null;
@@ -253,7 +253,7 @@ document.addEventListener('input',e=>{
   else{dr[d.k]=t.value;if(d.k==='review')t.nextElementSibling.textContent=t.value.length+' 字'}
   if(d.m||d.k==='sell')updClose(tr);
   return dirty()}
- if(t.id==='idea'){S.idea=t.value;$('ideac').textContent=t.value.length+' / 200 字';dirty();return}
+ if(t.id==='idea'){S.idea=t.value;dirty();return}
  if(t.id==='cap'){S.capital=num(t.value)||0;dirty();fc();lvr();return}
  if(t.id&&t.id.startsWith('f-'))fc()});
 document.addEventListener('click',e=>{
