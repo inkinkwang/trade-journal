@@ -72,8 +72,13 @@ td.eh{position:relative}td.eh .ec{position:absolute;right:2px;top:1px;font-size:
 #dn .dbox{background:#fff;color:#1a1a1a;--bg:#fff;--fg:#1a1a1a;--mut:#666;--line:#e6e9ed;--soft:#f7f8fa;--bad:#c0392b;--blue:#1f6feb;border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-top:8px}
 #dn .dbox .fl,#dn .dbox .fl li{color:var(--bad)}#dn .dbox .note{color:var(--blue)}#dn .dbox .note .ts{color:var(--mut)}
 .dn-bar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:6px 0 10px}
-dialog#syncDlg{border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);padding:20px;max-width:460px;width:calc(100% - 32px);box-shadow:0 12px 36px rgba(0,0,0,.22)}
-dialog#syncDlg::backdrop{background:rgba(0,0,0,.45)}
+dialog#syncDlg,dialog#memoDlg{border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);padding:20px;max-width:460px;width:calc(100% - 32px);box-shadow:0 12px 36px rgba(0,0,0,.22)}
+dialog#memoDlg{max-width:680px;max-height:85vh;overflow-y:auto;line-height:1.65}
+dialog#memoDlg h3{margin:0 0 10px;font-size:18px;color:var(--org)}
+dialog#memoDlg h4{margin:14px 0 6px;font-size:15px}
+dialog#memoDlg ul{margin:4px 0 10px;padding-left:20px;font-size:14.5px}
+dialog#syncDlg::backdrop,dialog#memoDlg::backdrop{background:rgba(0,0,0,.45)}
+.btn.org{background:var(--org);color:#fff}
 dialog#syncDlg h3{margin:0 0 10px;font-size:18px}
 dialog#syncDlg ol{margin:8px 0 14px;padding-left:20px;font-size:14px;color:var(--mut);line-height:1.6}
 dialog#syncDlg .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;justify-content:flex-end}
@@ -87,7 +92,7 @@ dialog#syncDlg .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;justify-
 <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center"><label style="flex-direction:row;align-items:center;gap:8px">總本金（元）<input id="cap" type="number" style="width:120px"></label><span id="st" class="m"></span><button class="btn ghost sm" id="syncNow" type="button" style="display:none">↻ 立即同步</button><button class="btn ghost sm" id="syncBtn" type="button">☁️ 同步設定</button></div></header>
 
 <h2>一、個股追蹤表</h2>
-<div class="idea" style="margin-bottom:14px"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:6px"><label style="flex-direction:row;align-items:center;gap:6px">日期<input id="ideaDate" type="text" maxlength="20" placeholder="11/25" style="width:96px"></label><span style="font-size:14px;color:var(--mut)">預備操作想法</span></div><textarea id="idea" rows="7" placeholder="例如：台積電回到買點一以下先買…"></textarea></div>
+<div class="idea" style="margin-bottom:14px"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:6px"><label style="flex-direction:row;align-items:center;gap:6px">日期<input id="ideaDate" type="text" maxlength="20" placeholder="11/25" style="width:96px"></label><span style="font-size:14px;color:var(--mut)">預備操作想法</span><button class="btn sm org" id="memoBtn" type="button" style="margin-left:auto">操作提醒</button></div><textarea id="idea" rows="7" placeholder="例如：台積電回到買點一以下先買…"></textarea></div>
 <div class="wrap"><table id="tb"></table></div>
 <p style="margin:10px 0 0"><button class="btn ghost" data-a="addrow" style="font-size:14px">＋ 新增一列</button> <button class="btn ghost" data-a="delmode" id="delRowBtn" style="font-size:14px">－ 刪除一列</button> <button class="btn sm" data-a="delok" id="delOkBtn" style="display:none;font-size:14px">確認刪除</button> <button class="btn ghost" data-a="delno" id="delNoBtn" style="display:none;font-size:14px">取消</button> <button class="btn ghost" data-a="pxnow" style="font-size:14px">↻ 立即更新收盤價</button> <button class="btn ghost" data-a="pxlive" style="font-size:14px">↻ 立即更新盤中價格</button><span id="pxs" class="m"></span></p>
 
@@ -127,6 +132,34 @@ dialog#syncDlg .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;justify-
 <button class="btn ghost sm" id="syncClose" type="button">關閉</button>
 <button class="btn sm" id="syncSave" type="button">儲存並同步</button>
 </div>
+</dialog>
+<dialog id="memoDlg">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px">
+<h3>📌 操作提醒（12–1 月佈局與 Q1 波段原則）</h3>
+<button class="btn ghost sm" id="memoCloseTop" type="button">關閉</button>
+</div>
+<p class="m" style="font-size:14px;margin:0 0 10px">核心矛盾：「股價已先殺評價反映擔憂，但賣方 2027 EPS 還沒動刀。」若美亞資料中心建置持續遞延，3 月底～Q2 財報季最容易出現 2027 EPS 下修的戴維斯雙殺。核心篩選看兩點：<b>① 2027 成長率是否灌水</b>、<b>② 用 2026 EPS 算現在是否夠便宜</b>。</p>
+<h4>🥇 第一優先：核心首選（現金流＋護城河、2027 EPS 最不易被砍）</h4>
+<ul>
+<li><b>台積電（2330）</b>：2026 PE 19.7x｜2027 成長 +33.4%。屬第三波且有長約／CoWoS 保護，獲利預估最務實、下檔保護最強。</li>
+<li><b>光寶科（2301）</b>：2026 PE 16.9x｜2027 成長 +37.1%。第二波電源／電力基建受惠（缺電緩衝），低基期幾乎無泡沫。</li>
+<li><b>台達電（2308）</b>：2026 PE 27.3x｜2027 成長 +58.4%。高壓直流／儲能剛性需求龍頭，但 2026 PE 偏高，<b>等 12 月回測進入價值帶（約 918 以下）再接</b>。</li>
+</ul>
+<h4>🥈 第二優先：Q1 波段衛星首選（泡沫已先殺乾淨，或 2027 沒灌水）</h4>
+<ul>
+<li><b>雙鴻（3324）</b>：2026 PE 僅 14.7x（遠低於同業），評價泡沫已先洗乾淨，Q1 搶反彈風報比佳，但 3 月底前必走。</li>
+<li><b>健鼎（3044）</b>：2026 PE 14.0x｜2027 成長 +23.2%。成熟高現金流 PCB，幾乎無本夢比。</li>
+<li><b>嘉澤（3533）／金像電（2368）／京元電（2449）</b>：2026 PE 約 19.3x–21.8x，回測價值區時適合作為衛星波段配置。</li>
+<li><b>技嘉（2376）</b>：2026 PE 6.4x｜2027 成長 -2.8%。已先下修無虛胖，具低基期防禦。</li>
+</ul>
+<h4>⚠️ 建議放最後順位（2027 EPS 灌水嚴重 ＋ 高 2026 PE，慎防 Q2 雙殺）</h4>
+<ul>
+<li><b>極高風險（2026 PE &gt; 35x 且 2027 成長 +107%～+185%）</b>：健策（61.8x）、聯發科（51.4x）、南電（36.8x）、景碩（35.7x）。</li>
+<li><b>第一波機櫃／CCL 高成長群（2026 PE 22.5x–29.3x）</b>：台光電、欣興、奇鋐、富世達、臻鼎、貿聯 — 12–1 月若急殺只做<b>小量 Q1 短線試單</b>，不抱過 3 月底。</li>
+<li><b>記憶體循環股</b>（南亞科、宇瞻、宜鼎）：看報價循環，不混入 AI Capex 邏輯。</li>
+</ul>
+<p style="background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px;margin:12px 0 0"><b>實戰執行一句話：</b>12–1 月以「台積電、光寶科、台達電（等回檔）」為核心主倉 ＋「雙鴻／健鼎」做彈性；高本夢比千金股只小量搶反彈，且所有部位一律在 <b>3 月底財報法說攤牌前</b> 分批獲利了結。</p>
+<div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn sm" id="memoClose" type="button">關閉</button></div>
 </dialog>
 <script>
 const K='tj1',$=id=>document.getElementById(id),num=v=>{const x=parseFloat(v);return isFinite(x)?x:null},
@@ -506,6 +539,10 @@ $('histList').onclick=async e=>{
 };
 $('syncBtn').onclick=()=>{const c=ghCfg();$('ghTok').value=c.token||'';$('syncMeta').textContent=c.gistId?'Gist ID：'+c.gistId:'尚未連結雲端 Gist';$('syncMsg').textContent='';if(c.token)loadHistory();else $('histWrap').style.display='none';$('syncDlg').showModal()};
 $('syncClose').onclick=()=>$('syncDlg').close();
+$('memoBtn').onclick=()=>$('memoDlg').showModal();
+$('memoClose').onclick=()=>$('memoDlg').close();
+$('memoCloseTop').onclick=()=>$('memoDlg').close();
+$('memoDlg').onclick=e=>{if(e.target===$('memoDlg'))$('memoDlg').close()};
 $('syncClr').onclick=()=>{setGhCfg(null);updSyncBtn();st('僅存於此瀏覽器（未設定同步）');$('syncDlg').close()};
 $('syncSave').onclick=async()=>{
  const tok=$('ghTok').value.trim();if(!tok){$('syncMsg').className='bad';$('syncMsg').textContent='請輸入 GitHub Token';return}
