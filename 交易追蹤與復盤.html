@@ -331,45 +331,60 @@ async function twse(ds){const r=await fetch('https://www.twse.com.tw/rwd/zh/afte
 async function tpex(ds){try{const r=await fetch('https://www.tpex.org.tw/web/stock/aftertrading/daily_close_quotes/stk_quote_result.php?l=zh-tw&o=json&d='+(+ds.slice(0,4)-1911)+'/'+ds.slice(4,6)+'/'+ds.slice(6),{cache:'no-store'}),j=await r.json(),tb=(j.tables||[])[0];
  return tb&&tb.data&&tb.data.length?tb.data.map(x=>{const p=num(String(x[2]).replace(/,/g,'')),df=num(String(x[3]).replace(/,/g,''));return{c:x[0],n:x[1],p,prev:p!=null&&df!=null?p-df:null}}).filter(x=>x.p!=null):null}catch(e){return null}}
 function pick(L,s){const n=(s.n||'').trim();return L.find(x=>s.code&&x.c===s.code)||L.find(x=>x.c===n||x.n===n)||L.find(x=>n.length>=2&&x.n.startsWith(n))}
+const CODE_MAP={'台積電':'2330','聯發科':'2454','京元電':'2449','欣興':'3037','南電':'8046','景碩':'3189','台光電':'2383','金像電':'2368','臻鼎':'4958','健鼎':'3044','技嘉':'2376','台達電':'2308','光寶科':'2301','奇鋐':'3017','雙鴻':'3324','健策':'3653','富世達':'6805','嘉澤':'3533','貿聯':'3665','南亞科':'2408','宇瞻':'8271','宜鼎':'5289'};
+function applyPx(i,s,p,lu,ld){
+ s.px=String(p);s.lu=lu;s.ld=ld;
+ const el=document.querySelector('[data-r="'+i+'"][data-k="px"]');
+ if(el&&document.activeElement!==el)el.value=s.px;
+ upd(i);
+}
+async function cnyesQuotes(codes){
+ const qMap={};
+ for(let j=0;j<codes.length;j+=40){
+  const ids=codes.slice(j,j+40).map(c=>'TWS:'+c+':STOCK').join(',');
+  const r=await fetch('https://ws.api.cnyes.com/ws/api/v1/quote/quotes/'+ids,{cache:'no-store'});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const d=await r.json();(d.data||[]).forEach(q=>{if(q&&q['200010'])qMap[q['200010']]=q});
+ }
+ return qMap;
+}
 async function pxUpdate(day){
  if(pxBusy)return;pxBusy=true;pxTry=Date.now();pxStat('更新中…');
  try{let ds=day,L=null;for(let k=0;k<10&&!L;k++){if(k){await new Promise(r=>setTimeout(r,2000));do{ds=dsAdd(ds,-1)}while([0,6].includes(new Date(Date.UTC(+ds.slice(0,4),+ds.slice(4,6)-1,+ds.slice(6))).getUTCDay()))}L=await twse(ds)}
   if(!L){pxStat('無法取得證交所資料');return}
-  const miss=[];let L2=null;
-  for(const [i,s] of S.stocks.entries()){if(!(s.n||'').trim())continue;let m=pick(L,s);
+  const miss=[],otc=[];let L2=null;
+  for(const [i,s] of S.stocks.entries()){const n=(s.n||'').trim();if(!n)continue;let m=pick(L,s);
    if(!m){if(L2===null)L2=(await tpex(ds))||[];m=pick(L2,s)}
-   if(!m){miss.push(s.n);continue}
-   const lm=twLim(m.prev);s.code=m.c;s.px=String(m.p);s.lu=lm.lu;s.ld=lm.ld;const el=document.querySelector('[data-r="'+i+'"][data-k="px"]');if(el&&document.activeElement!==el)el.value=s.px;upd(i)}
+   if(!m){const code=s.code||(/^\d{4,6}$/.test(n)?n:CODE_MAP[n]);if(code){s.code=code;otc.push([i,s])}else miss.push(n);continue}
+   const lm=twLim(m.prev);s.code=m.c;applyPx(i,s,m.p,lm.lu,lm.ld)}
+  if(otc.length){
+   try{const qMap=await cnyesQuotes(otc.map(([,s])=>s.code));
+    for(const [i,s] of otc){const q=qMap[s.code],p=q&&num(q['6']??q['21']);if(p==null)miss.push(s.n);else applyPx(i,s,p,num(q['75']),num(q['76']))}}
+   catch(e){otc.forEach(([,s])=>miss.push(s.n))}
+  }
   S.pxDate=ds;S.pxAt=Date.now();const n=twNow();
   if(ds===day||day<n.ds||n.min>=T1)S.pxFor=day;dirty();
-  pxStat((ds!==day?'（'+dsFmt(day)+' 尚無資料，顯示最近有效收盤日）':'')+(miss.length?'未能自動更新：'+miss.join('、')+'（上櫃或名稱不符，請手動輸入）':''))
+  pxStat((ds!==day?'（'+dsFmt(day)+' 尚無資料，顯示最近有效收盤日）':'')+(miss.length?'未能自動更新：'+miss.join('、')+'（請確認代號或名稱）':''))
  }catch(e){pxStat('更新失敗（'+(e.message||'網路錯誤')+'）')}
  finally{pxBusy=false;pxSched()}}
-const CODE_MAP={'台積電':'2330','聯發科':'2454','京元電':'2449','欣興':'3037','南電':'8046','景碩':'3189','台光電':'2383','金像電':'2368','臻鼎':'4958','健鼎':'3044','技嘉':'2376','台達電':'2308','光寶科':'2301','奇鋐':'3017','雙鴻':'3324','健策':'3653','富世達':'6805','嘉澤':'3533','貿聯':'3665','南亞科':'2408','宇瞻':'8271','宜鼎':'5289'};
 async function pxLive(){
  if(pxBusy)return;pxBusy=true;$('pxs').textContent='盤中即時價格更新中…';
  try{
   const needCode=S.stocks.some(s=>{const n=(s.n||'').trim();return n&&!s.code&&!/^\d{4,6}$/.test(n)&&!CODE_MAP[n]});
   let L=null,L2=null;
   if(needCode){let ds=target();for(let k=0;k<10&&!L;k++){if(k)do{ds=dsAdd(ds,-1)}while([0,6].includes(new Date(Date.UTC(+ds.slice(0,4),+ds.slice(4,6)-1,+ds.slice(6))).getUTCDay()));L=await twse(ds)}L2=(await tpex(ds))||[]}
-  const items=[];const miss=[];
+  const items=[],miss=[];
   for(const [i,s] of S.stocks.entries()){
    const n=(s.n||'').trim();if(!n)continue;
    if(!s.code){if(/^\d{4,6}$/.test(n))s.code=n;else if(CODE_MAP[n])s.code=CODE_MAP[n];else if(L){const m=pick(L,s)||(L2&&pick(L2,s));if(m)s.code=m.c}}
    if(s.code)items.push([i,s]);else miss.push(n);
   }
   if(!items.length){$('pxs').textContent='找不到可查詢的股票代號';return}
-  const qMap={};
-  for(let j=0;j<items.length;j+=40){
-   const chunk=items.slice(j,j+40),ids=chunk.map(([,s])=>'TWS:'+s.code+':STOCK').join(',');
-   const r=await fetch('https://ws.api.cnyes.com/ws/api/v1/quote/quotes/'+ids,{cache:'no-store'});
-   if(!r.ok)throw new Error('HTTP '+r.status);
-   const d=await r.json();(d.data||[]).forEach(q=>{if(q&&q['200010'])qMap[q['200010']]=q});
-  }
+  const qMap=await cnyesQuotes(items.map(([,s])=>s.code));
   for(const [i,s] of items){
    const q=qMap[s.code],p=q&&num(q['6']??q['21']);
    if(p==null){miss.push(s.n);continue}
-   s.px=String(p);s.lu=num(q['75']);s.ld=num(q['76']);const el=document.querySelector('[data-r="'+i+'"][data-k="px"]');if(el&&document.activeElement!==el)el.value=s.px;upd(i);
+   applyPx(i,s,p,num(q['75']),num(q['76']));
   }
   dirty();
   $('pxs').textContent='盤中即時價格已更新（'+fmt(Date.now())+'）'+(miss.length?'　未能更新：'+miss.join('、'):'');
