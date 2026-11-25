@@ -25,7 +25,7 @@ td input:focus{background:var(--soft);box-shadow:inset 0 -2px 0 var(--fg)}
 td select{border:0;border-radius:0;padding:8px 4px;min-width:0;background:transparent;text-align:center;text-align-last:center}
 td.c{padding:8px 4px;text-align:center;background:var(--soft);font-variant-numeric:tabular-nums;white-space:nowrap}
 :root{--blue:#1f6feb;--org:#e67e22;--pur:#8957e5}@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--blue:#6cb0ff;--org:#f0a050;--pur:#bc8cff}}:root[data-theme="dark"]{--blue:#6cb0ff;--org:#f0a050;--pur:#bc8cff}
-td[id^="b1_"]{color:var(--pur)}td[id^="b2_"]{color:var(--blue)}td.w5{color:var(--org);font-weight:600}td.in1 input{color:var(--bad);font-weight:600}td.in2{background:var(--bad)}td.in2 input{color:var(--bg);font-weight:600}td.in2 input:focus{background:transparent}td.rc input{color:var(--org);font-weight:600}.idea{margin:8px 0 6px}.idea textarea{margin-bottom:0}
+td[id^="b1_"]{color:var(--pur)}td[id^="b2_"]{color:var(--blue)}td.w5{color:var(--org);font-weight:600}td.in1 input{color:var(--bad);font-weight:600}td.in2{background:var(--bad)}td.in2 input{color:var(--bg);font-weight:600}td.in2 input:focus{background:transparent}td.lup{background:#6e1414}td.ldn{background:#144d2a}td.lup input,td.ldn input{color:#fff;font-weight:600}td.lup input:focus,td.ldn input:focus{background:transparent}td.rc input{color:var(--org);font-weight:600}.idea{margin:8px 0 6px}.idea textarea{margin-bottom:0}
 th:first-child,td:first-child{position:sticky;left:0;z-index:1;background:var(--bg)}th:first-child{background:var(--soft)}
 .card{border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin:14px 0;background:var(--bg)}
 fieldset{border:0;border-top:1px solid var(--line);margin:0;padding:12px 0 8px;min-width:0}
@@ -144,7 +144,7 @@ function upd(i){
  b1=e!=null&&a!=null?e*a:null,b2=e!=null&&b!=null?e*b:null,r=p&&b1!=null?(p-b1)/p*100:null,r2=p&&b2!=null?(p-b2)/p*100:null,
  R2=x=>x==null?'—':String(Math.round(x*100)/100);
  $('b1_'+i).textContent=R2(b1);$('b2_'+i).textContent=R2(b2);
- [['r_',r,7],['r2_',r2,8]].forEach(([id,v,lim])=>{const el=$(id+i);el.textContent=v==null?'—':v.toFixed(1)+'%';el.classList.toggle('w5',v!=null&&v<=lim)});const pc=document.querySelector('[data-r="'+i+'"][data-k="px"]').parentElement,i2=p!=null&&b2!=null&&p<=b2,i1=p!=null&&b1!=null&&p<=b1;pc.classList.toggle('in2',i2);pc.classList.toggle('in1',i1&&!i2);const dp=pdate(s.d),dc=document.querySelector('[data-r="'+i+'"][data-k="d"]').parentElement;dc.classList.toggle('rc',!!dp&&dp<=Date.now()&&(Date.now()-dp)/864e5<=30);EK.forEach(k=>updE(i,k))}
+ [['r_',r,7],['r2_',r2,8]].forEach(([id,v,lim])=>{const el=$(id+i);el.textContent=v==null?'—':v.toFixed(1)+'%';el.classList.toggle('w5',v!=null&&v<=lim)});const pc=document.querySelector('[data-r="'+i+'"][data-k="px"]').parentElement,i2=p!=null&&b2!=null&&p<=b2,i1=p!=null&&b1!=null&&p<=b1,lu=p!=null&&s.lu!=null&&p>=s.lu,ld=p!=null&&s.ld!=null&&p<=s.ld;pc.classList.toggle('in2',i2);pc.classList.toggle('in1',i1&&!i2);pc.classList.toggle('lup',lu);pc.classList.toggle('ldn',!lu&&ld);const dp=pdate(s.d),dc=document.querySelector('[data-r="'+i+'"][data-k="d"]').parentElement;dc.classList.toggle('rc',!!dp&&dp<=Date.now()&&(Date.now()-dp)/864e5<=30);EK.forEach(k=>updE(i,k))}
 /* EPS 修改紀錄：每欄保留最近 10 次；最近連續 3 次以上同方向（上調或下修）顯示紅色 */
 const EK=['e26','e27'];
 function streak(h){let n=0,d=0;for(let j=h.length-1;j>=0;j--){const x=Math.sign(h[j].to-h[j].from);if(!x)break;if(!d)d=x;if(x!==d)break;n++}return n}
@@ -288,10 +288,12 @@ const twNow=()=>{const d=new Date(Date.now()+8*3600e3),p=n=>String(n).padStart(2
 let pxT,pxBusy=false,pxTry=0;
 function pxStat(x){$('pxs').textContent=(S.pxDate?'收盤價日期 '+dsFmt(S.pxDate):'尚未自動更新收盤價')+(S.pxAt?'（更新於 '+fmt(S.pxAt)+'）':'')+(x?'　'+x:'')}
 function target(){const n=twNow();let ds=n.ds,wd=n.wd;if(wd>=1&&wd<=5&&n.min>=T0)return ds;do{ds=dsAdd(ds,-1);wd=(wd+6)%7}while(wd===0||wd===6);return ds}
+function twTick(p){return p<10?.01:p<50?.05:p<100?.1:p<500?.5:p<1000?1:5}
+function twLim(prev){if(!(prev>0))return{lu:null,ld:null};const u=prev*1.1,d=prev*0.9,tu=twTick(u),td=twTick(d);return{lu:Math.round(Math.floor(u/tu+1e-9)*tu*100)/100,ld:Math.round(Math.ceil(d/td-1e-9)*td*100)/100}}
 async function twse(ds){const r=await fetch('https://www.twse.com.tw/rwd/zh/afterTrading/MI_INDEX?type=ALLBUT0999&response=json&date='+ds,{cache:'no-store'}),j=await r.json();
- const tb=(j.tables||[]).find(t=>t.fields&&t.fields[0]==='證券代號'&&t.data&&t.data.length);return tb?tb.data.map(x=>({c:x[0],n:x[1],p:num(String(x[8]).replace(/,/g,''))})).filter(x=>x.p!=null):null}
+ const tb=(j.tables||[]).find(t=>t.fields&&t.fields[0]==='證券代號'&&t.data&&t.data.length);return tb?tb.data.map(x=>{const p=num(String(x[8]).replace(/,/g,'')),sg=String(x[9]||'').includes('-')?-1:String(x[9]||'').includes('+')?1:0,df=num(String(x[10]).replace(/,/g,''))||0;return{c:x[0],n:x[1],p,prev:p!=null&&sg?p-sg*df:null}}).filter(x=>x.p!=null):null}
 async function tpex(ds){try{const r=await fetch('https://www.tpex.org.tw/web/stock/aftertrading/daily_close_quotes/stk_quote_result.php?l=zh-tw&o=json&d='+(+ds.slice(0,4)-1911)+'/'+ds.slice(4,6)+'/'+ds.slice(6),{cache:'no-store'}),j=await r.json(),tb=(j.tables||[])[0];
- return tb&&tb.data&&tb.data.length?tb.data.map(x=>({c:x[0],n:x[1],p:num(String(x[2]).replace(/,/g,''))})).filter(x=>x.p!=null):null}catch(e){return null}}
+ return tb&&tb.data&&tb.data.length?tb.data.map(x=>{const p=num(String(x[2]).replace(/,/g,'')),df=num(String(x[3]).replace(/,/g,''));return{c:x[0],n:x[1],p,prev:p!=null&&df!=null?p-df:null}}).filter(x=>x.p!=null):null}catch(e){return null}}
 function pick(L,s){const n=(s.n||'').trim();return L.find(x=>s.code&&x.c===s.code)||L.find(x=>x.c===n||x.n===n)||L.find(x=>n.length>=2&&x.n.startsWith(n))}
 async function pxUpdate(day){
  if(pxBusy)return;pxBusy=true;pxTry=Date.now();pxStat('更新中…');
@@ -301,7 +303,7 @@ async function pxUpdate(day){
   for(const [i,s] of S.stocks.entries()){if(!(s.n||'').trim())continue;let m=pick(L,s);
    if(!m){if(L2===null)L2=(await tpex(ds))||[];m=pick(L2,s)}
    if(!m){miss.push(s.n);continue}
-   s.code=m.c;s.px=String(m.p);const el=document.querySelector('[data-r="'+i+'"][data-k="px"]');if(el&&document.activeElement!==el)el.value=s.px;upd(i)}
+   const lm=twLim(m.prev);s.code=m.c;s.px=String(m.p);s.lu=lm.lu;s.ld=lm.ld;const el=document.querySelector('[data-r="'+i+'"][data-k="px"]');if(el&&document.activeElement!==el)el.value=s.px;upd(i)}
   S.pxDate=ds;S.pxAt=Date.now();const n=twNow();
   if(ds===day||day<n.ds||n.min>=T1)S.pxFor=day;dirty();
   pxStat((ds!==day?'（'+dsFmt(day)+' 尚無資料，顯示最近有效收盤日）':'')+(miss.length?'未能自動更新：'+miss.join('、')+'（上櫃或名稱不符，請手動輸入）':''))
@@ -331,7 +333,7 @@ async function pxLive(){
   for(const [i,s] of items){
    const q=qMap[s.code],p=q&&num(q['6']??q['21']);
    if(p==null){miss.push(s.n);continue}
-   s.px=String(p);const el=document.querySelector('[data-r="'+i+'"][data-k="px"]');if(el&&document.activeElement!==el)el.value=s.px;upd(i);
+   s.px=String(p);s.lu=num(q['75']);s.ld=num(q['76']);const el=document.querySelector('[data-r="'+i+'"][data-k="px"]');if(el&&document.activeElement!==el)el.value=s.px;upd(i);
   }
   dirty();
   $('pxs').textContent='盤中即時價格已更新（'+fmt(Date.now())+'）'+(miss.length?'　未能更新：'+miss.join('、'):'');
