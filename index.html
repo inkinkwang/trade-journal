@@ -87,10 +87,9 @@ dialog#syncDlg .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;justify-
 <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center"><label style="flex-direction:row;align-items:center;gap:8px">總本金（元）<input id="cap" type="number" style="width:120px"></label><span id="st" class="m"></span><button class="btn ghost sm" id="syncNow" type="button" style="display:none">↻ 立即同步</button><button class="btn ghost sm" id="syncBtn" type="button">☁️ 同步設定</button></div></header>
 
 <h2>一、個股追蹤表</h2>
-<div class="idea"><div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px"><span style="font-size:14px;color:var(--mut)">預備操作想法</span><label style="flex-direction:row;align-items:center;gap:8px">日期<input id="ideaDate" type="text" maxlength="20" placeholder="例如：11/20" style="width:150px"></label></div><textarea id="idea" rows="6" placeholder="例如：台積電回到買點一以下先買…"></textarea><span class="cnt m" id="ideac">0 / 200 字</span></div>
-<p class="sub" style="height:48px"></p>
+<div class="idea" style="margin-bottom:14px"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:6px"><label style="flex-direction:row;align-items:center;gap:6px">日期<input id="ideaDate" type="text" maxlength="20" placeholder="11/25" style="width:96px"></label><span style="font-size:14px;color:var(--mut)">預備操作想法</span></div><textarea id="idea" rows="7" placeholder="例如：台積電回到買點一以下先買…"></textarea></div>
 <div class="wrap"><table id="tb"></table></div>
-<p style="margin:10px 0 0"><button class="btn ghost" data-a="addrow" style="font-size:14px">＋ 新增一列</button> <button class="btn ghost" data-a="pxnow" style="font-size:14px">↻ 立即更新收盤價</button> <button class="btn ghost" data-a="pxlive" style="font-size:14px">↻ 立即更新盤中價格</button><span id="pxs" class="m"></span></p>
+<p style="margin:10px 0 0"><button class="btn ghost" data-a="addrow" style="font-size:14px">＋ 新增一列</button> <button class="btn ghost" data-a="delmode" id="delRowBtn" style="font-size:14px">－ 刪除一列</button> <button class="btn sm" data-a="delok" id="delOkBtn" style="display:none;font-size:14px">確認刪除</button> <button class="btn ghost" data-a="delno" id="delNoBtn" style="display:none;font-size:14px">取消</button> <button class="btn ghost" data-a="pxnow" style="font-size:14px">↻ 立即更新收盤價</button> <button class="btn ghost" data-a="pxlive" style="font-size:14px">↻ 立即更新盤中價格</button><span id="pxs" class="m"></span></p>
 
 <h2>二、新增交易記錄</h2>
 <div class="card" id="tf"></div>
@@ -145,8 +144,18 @@ const T=id=>S.trades.find(t=>t.id===id);
 function pdate(v){const m=String(v||'').match(/^(\d{2}|\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);if(!m)return null;let y=+m[1];if(y<100)y+=2000;const d=new Date(y,m[2]-1,m[3]);return isNaN(d)?null:d}
 function dd(v){const d=pdate(v);return d?String(d.getFullYear()).slice(2)+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0'):(v||'')}
 const C=[['n','個股名稱','text'],['d','低點日','text'],['low','低點價位','number'],['px','最新收盤價','number'],['b1','買點一價位'],['b2','買點二價位'],['r','買賣差率'],['r2','超跌差率'],['e26','2026eps','number'],['e27','2027eps','number'],['p1','買點一 P/E','number'],['p2','買點二 P/E','number'],['note','備註','text'],['eb','買點採用 EPS','sel']];
+let delMode=false;const DEL=new Set();
 function build(){
- $('idea').value=S.idea||'';$('ideac').textContent=(S.idea||'').length+' / 200 字';$('ideaDate').value=S.ideaDate||'';const W=[92,88,84,84,84,84,84,84,76,76,88,88,210,104];$('tb').innerHTML='<colgroup>'+W.map(w=>`<col style="width:${w}px">`).join('')+'</colgroup><tr>'+C.map(c=>`<th>${c[1]}</th>`).join('')+'</tr>'+S.stocks.map((s,i)=>'<tr>'+C.map(c=>c[2]==='sel'?`<td><select data-r="${i}" data-k="eb"><option value="27"${s.eb!=='26'?' selected':''}>2027 EPS</option><option value="26"${s.eb==='26'?' selected':''}>2026 EPS</option></select></td>`:c[2]?`<td${EK.includes(c[0])?' class="eh"':''}><input data-r="${i}" data-k="${c[0]}" type="${c[2]}" step="any" value="${esc(c[0]==='d'?dd(s.d):s[c[0]])}"${c[0]==='d'?' placeholder="YY/MM/DD"':''}>${EK.includes(c[0])?`<span class="ec" id="ec${c[0]}_${i}"></span>`:''}</td>`:`<td class="c" id="${c[0]}_${i}"></td>`).join('')+'</tr>').join('');
+ $('idea').value=S.idea||'';$('ideaDate').value=S.ideaDate||'';
+ $('delRowBtn').style.display=delMode?'none':'';$('delOkBtn').style.display=delMode?'':'none';$('delNoBtn').style.display=delMode?'':'none';
+ const W=[delMode?116:92,88,84,84,84,84,84,84,76,76,88,88,210,104];$('tb').style.width=(delMode?1350:1326)+'px';
+ $('tb').innerHTML='<colgroup>'+W.map(w=>`<col style="width:${w}px">`).join('')+'</colgroup><tr>'+C.map(c=>`<th>${c[1]}</th>`).join('')+'</tr>'+S.stocks.map((s,i)=>'<tr>'+C.map(c=>{
+  if(c[2]==='sel')return `<td><select data-r="${i}" data-k="eb"><option value="27"${s.eb!=='26'?' selected':''}>2027 EPS</option><option value="26"${s.eb==='26'?' selected':''}>2026 EPS</option></select></td>`;
+  if(!c[2])return `<td class="c" id="${c[0]}_${i}"></td>`;
+  const inp=`<input data-r="${i}" data-k="${c[0]}" type="${c[2]}" step="any" value="${esc(c[0]==='d'?dd(s.d):s[c[0]])}"${c[0]==='d'?' placeholder="YY/MM/DD"':''}>`;
+  if(c[0]==='n'&&delMode)return `<td><div style="display:flex;align-items:center"><input type="checkbox" data-dr="${i}"${DEL.has(i)?' checked':''} style="width:auto;flex:none;margin:0 0 0 6px">${inp}</div></td>`;
+  return `<td${EK.includes(c[0])?' class="eh"':''}>${inp}${EK.includes(c[0])?`<span class="ec" id="ec${c[0]}_${i}"></span>`:''}</td>`;
+ }).join('')+'</tr>').join('');
  S.stocks.forEach((_,i)=>upd(i))}
 function upd(i){
  const s=S.stocks[i],e=num(s.eb==='26'?s.e26:s.e27),a=num(s.p1),b=num(s.p2),p=num(s.px),
@@ -171,7 +180,7 @@ $('tf').innerHTML=`<fieldset><legend>標的與部位</legend><div class="g">${F(
 <fieldset><legend>買入條件</legend><div class="g3">${F('c1','買入條件 (1)')}${F('c2','買入條件 (2)')}${F('c3','買入條件 (3)')}</div></fieldset>
 <fieldset><legend>失效條件</legend><div class="g3">${F('f1','失效條件 (1)')}${F('f2','失效條件 (2)')}${F('f3','失效條件 (3)')}</div></fieldset>
 <fieldset><legend>後續補充說明</legend><textarea id="f-note" rows="3" placeholder="買入當下的想法…"></textarea></fieldset>
-<p id="warn" class="m" style="margin:0 0 10px"></p><button class="btn" data-a="submit">送出</button> <span id="msg" class="bad"></span>`;
+<p id="warn" class="m" style="margin:0 0 10px"></p><button class="btn sm" data-a="submit">送出</button> <span id="msg" class="bad"></span>`;
 function fc(){
  const p=num($('f-price').value),q=num($('f-qty').value),tot=p!=null&&q!=null?p*q:null,w=[];
  $('f-total').value=tot==null?'':Math.round(tot*100)/100;
@@ -284,13 +293,14 @@ function updClose(t){const c=calcClose(t);$('ret_'+t.id).value=c?c.ret:'';$('pnl
 /* 事件 */
 document.addEventListener('input',e=>{
  const t=e.target,d=t.dataset;
+ if(d.dr!=null){const i=+d.dr;if(t.checked)DEL.add(i);else DEL.delete(i);return}
  if(d.r!=null){S.stocks[+d.r][d.k]=t.value;upd(+d.r);return dirty()}
  if(d.t){const tr=T(d.t),dr=tr.draft||(tr.draft={});
   if(d.m){const m=dr.merge||(dr.merge=[]),i=m.indexOf(d.m);if(t.checked&&i<0)m.push(d.m);if(!t.checked&&i>=0)m.splice(i,1)}
   else{dr[d.k]=t.value;if(d.k==='review')t.nextElementSibling.textContent=t.value.length+' 字'}
   if(d.m||d.k==='sell')updClose(tr);
   return dirty()}
- if(t.id==='idea'){S.idea=t.value;$('ideac').textContent=t.value.length+' / 200 字';dirty();return}
+ if(t.id==='idea'){S.idea=t.value;dirty();return}
  if(t.id==='ideaDate'){S.ideaDate=t.value;dirty();return}
  if(t.id==='cap'){S.capital=num(t.value)||0;dirty();fc();lvr();return}
  if(t.id&&t.id.startsWith('f-'))fc()});
@@ -299,6 +309,9 @@ document.addEventListener('click',e=>{
  const a=b.dataset.a,t=T(b.dataset.t);
  if(a==='submit')return sub();
  if(a==='addrow'){S.stocks.push({});build();dirty();return}
+ if(a==='delmode'){delMode=true;DEL.clear();build();return}
+ if(a==='delno'){delMode=false;DEL.clear();build();return}
+ if(a==='delok'){if(DEL.size){S.stocks=S.stocks.filter((_,i)=>!DEL.has(i));dirty()}delMode=false;DEL.clear();build();return}
  if(a==='pxnow'){pxTry=0;pxUpdate(target());return}
  if(a==='pxlive')return pxLive();
  if(a==='edit'){EDIT.add(t.id);R();return}
