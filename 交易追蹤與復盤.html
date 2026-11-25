@@ -86,7 +86,7 @@ dialog#syncDlg .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;justify-
 <div class="idea"><div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px"><span style="font-size:14px;color:var(--mut)">預備操作想法</span><label style="flex-direction:row;align-items:center;gap:8px">日期<input id="ideaDate" type="text" maxlength="20" placeholder="例如：11/20" style="width:150px"></label></div><textarea id="idea" rows="6" placeholder="例如：台積電回到買點一以下先買…"></textarea><span class="cnt m" id="ideac">0 / 200 字</span></div>
 <p class="sub" style="height:48px"></p>
 <div class="wrap"><table id="tb"></table></div>
-<p style="margin:10px 0 0"><button class="btn ghost" data-a="addrow" style="font-size:14px">＋ 新增一列</button> <button class="btn ghost" data-a="pxnow" style="font-size:14px">↻ 立即更新收盤價</button><span id="pxs" class="m"></span></p>
+<p style="margin:10px 0 0"><button class="btn ghost" data-a="addrow" style="font-size:14px">＋ 新增一列</button> <button class="btn ghost" data-a="pxnow" style="font-size:14px">↻ 立即更新收盤價</button> <button class="btn ghost" data-a="pxlive" style="font-size:14px">↻ 立即更新盤中價格</button><span id="pxs" class="m"></span></p>
 
 <h2>二、新增交易記錄</h2>
 <div class="card" id="tf"></div>
@@ -264,6 +264,7 @@ document.addEventListener('click',e=>{
  if(a==='submit')return sub();
  if(a==='addrow'){S.stocks.push({});build();dirty();return}
  if(a==='pxnow'){pxTry=0;pxUpdate(target());return}
+ if(a==='pxlive')return pxLive();
  if(a==='edit'){EDIT.add(t.id);R();return}
  if(a==='ecancel'){EDIT.delete(t.id);R();return}
  if(a==='esave')return esave(t,b.closest('.card'));
@@ -306,6 +307,36 @@ async function pxUpdate(day){
   pxStat((ds!==day?'（'+dsFmt(day)+' 尚無資料，顯示最近有效收盤日）':'')+(miss.length?'未能自動更新：'+miss.join('、')+'（上櫃或名稱不符，請手動輸入）':''))
  }catch(e){pxStat('更新失敗（'+(e.message||'網路錯誤')+'）')}
  finally{pxBusy=false;pxSched()}}
+const CODE_MAP={'台積電':'2330','聯發科':'2454','京元電':'2449','欣興':'3037','南電':'8046','景碩':'3189','台光電':'2383','金像電':'2368','臻鼎':'4958','健鼎':'3044','技嘉':'2376','台達電':'2308','光寶科':'2301','奇鋐':'3017','雙鴻':'3324','健策':'3653','富世達':'6805','嘉澤':'3533','貿聯':'3665','南亞科':'2408','宇瞻':'8271','宜鼎':'5289'};
+async function pxLive(){
+ if(pxBusy)return;pxBusy=true;$('pxs').textContent='盤中即時價格更新中…';
+ try{
+  const needCode=S.stocks.some(s=>{const n=(s.n||'').trim();return n&&!s.code&&!/^\d{4,6}$/.test(n)&&!CODE_MAP[n]});
+  let L=null,L2=null;
+  if(needCode){let ds=target();for(let k=0;k<10&&!L;k++){if(k)do{ds=dsAdd(ds,-1)}while([0,6].includes(new Date(Date.UTC(+ds.slice(0,4),+ds.slice(4,6)-1,+ds.slice(6))).getUTCDay()));L=await twse(ds)}L2=(await tpex(ds))||[]}
+  const items=[];const miss=[];
+  for(const [i,s] of S.stocks.entries()){
+   const n=(s.n||'').trim();if(!n)continue;
+   if(!s.code){if(/^\d{4,6}$/.test(n))s.code=n;else if(CODE_MAP[n])s.code=CODE_MAP[n];else if(L){const m=pick(L,s)||(L2&&pick(L2,s));if(m)s.code=m.c}}
+   if(s.code)items.push([i,s]);else miss.push(n);
+  }
+  if(!items.length){$('pxs').textContent='找不到可查詢的股票代號';return}
+  const qMap={};
+  for(let j=0;j<items.length;j+=40){
+   const chunk=items.slice(j,j+40),ids=chunk.map(([,s])=>'TWS:'+s.code+':STOCK').join(',');
+   const r=await fetch('https://ws.api.cnyes.com/ws/api/v1/quote/quotes/'+ids,{cache:'no-store'});
+   if(!r.ok)throw new Error('HTTP '+r.status);
+   const d=await r.json();(d.data||[]).forEach(q=>{if(q&&q['200010'])qMap[q['200010']]=q});
+  }
+  for(const [i,s] of items){
+   const q=qMap[s.code],p=q&&num(q['6']??q['21']);
+   if(p==null){miss.push(s.n);continue}
+   s.px=String(p);const el=document.querySelector('[data-r="'+i+'"][data-k="px"]');if(el&&document.activeElement!==el)el.value=s.px;upd(i);
+  }
+  dirty();
+  $('pxs').textContent='盤中即時價格已更新（'+fmt(Date.now())+'）'+(miss.length?'　未能更新：'+miss.join('、'):'');
+ }catch(e){$('pxs').textContent='盤中更新失敗（'+(e.message||'網路錯誤')+'）'}
+ finally{pxBusy=false}}
 function pxSched(){clearTimeout(pxT);const n=twNow(),day=target();
  if(S.pxFor!==day){if(!pxBusy){const wait=pxTry&&Date.now()-pxTry<5*6e4?5*6e4-(Date.now()-pxTry):0;pxT=setTimeout(()=>pxUpdate(day),wait)}return}
  let ds=n.ds,wd=n.wd,add=0;if(!(wd>=1&&wd<=5&&n.min<T0)){do{ds=dsAdd(ds,1);wd=(wd+1)%7;add++}while(wd===0||wd===6)}
